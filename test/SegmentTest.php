@@ -2,72 +2,72 @@
 
 declare(strict_types=1);
 
-namespace Segment\Test;
+namespace Hightouch\Test;
 
 use PHPUnit\Framework;
-use Segment\Segment;
-use Segment\SegmentException;
+use Hightouch\Hightouch;
+use Hightouch\HightouchException;
 
-final class SegmentTest extends Framework\TestCase
+final class HightouchTest extends Framework\TestCase
 {
     protected function setUp(): void
     {
-        self::resetSegment();
+        self::resetHightouch();
     }
 
-    public function testAliasThrowsSegmentExceptionWhenClientHasNotBeenInitialized(): void
+    public function testAliasThrowsHightouchExceptionWhenClientHasNotBeenInitialized(): void
     {
-        $this->expectException(SegmentException::class);
-        $this->expectExceptionMessage('Segment::init() must be called before any other tracking method.');
+        $this->expectException(HightouchException::class);
+        $this->expectExceptionMessage('Hightouch::init() must be called before any other tracking method.');
 
-        Segment::alias([]);
+        Hightouch::alias([]);
     }
-    public function testFlushThrowsSegmentExceptionWhenClientHasNotBeenInitialized(): void
+    public function testFlushThrowsHightouchExceptionWhenClientHasNotBeenInitialized(): void
     {
-        $this->expectException(SegmentException::class);
-        $this->expectExceptionMessage('Segment::init() must be called before any other tracking method.');
+        $this->expectException(HightouchException::class);
+        $this->expectExceptionMessage('Hightouch::init() must be called before any other tracking method.');
 
-        Segment::flush();
+        Hightouch::flush();
     }
-    public function testGroupThrowsSegmentExceptionWhenClientHasNotBeenInitialized(): void
+    public function testGroupThrowsHightouchExceptionWhenClientHasNotBeenInitialized(): void
     {
-        $this->expectException(SegmentException::class);
-        $this->expectExceptionMessage('Segment::init() must be called before any other tracking method.');
+        $this->expectException(HightouchException::class);
+        $this->expectExceptionMessage('Hightouch::init() must be called before any other tracking method.');
 
-        Segment::group([]);
+        Hightouch::group([]);
     }
-    public function testIdentifyThrowsSegmentExceptionWhenClientHasNotBeenInitialized(): void
+    public function testIdentifyThrowsHightouchExceptionWhenClientHasNotBeenInitialized(): void
     {
-        $this->expectException(SegmentException::class);
-        $this->expectExceptionMessage('Segment::init() must be called before any other tracking method.');
+        $this->expectException(HightouchException::class);
+        $this->expectExceptionMessage('Hightouch::init() must be called before any other tracking method.');
 
-        Segment::identify([]);
+        Hightouch::identify([]);
     }
-    public function testPageThrowsSegmentExceptionWhenClientHasNotBeenInitialized(): void
+    public function testPageThrowsHightouchExceptionWhenClientHasNotBeenInitialized(): void
     {
-        $this->expectException(SegmentException::class);
-        $this->expectExceptionMessage('Segment::init() must be called before any other tracking method.');
+        $this->expectException(HightouchException::class);
+        $this->expectExceptionMessage('Hightouch::init() must be called before any other tracking method.');
 
-        Segment::page([]);
+        Hightouch::page([]);
     }
-    public function testScreenThrowsSegmentExceptionWhenClientHasNotBeenInitialized(): void
+    public function testScreenThrowsHightouchExceptionWhenClientHasNotBeenInitialized(): void
     {
-        $this->expectException(SegmentException::class);
-        $this->expectExceptionMessage('Segment::init() must be called before any other tracking method.');
+        $this->expectException(HightouchException::class);
+        $this->expectExceptionMessage('Hightouch::init() must be called before any other tracking method.');
 
-        Segment::screen([]);
+        Hightouch::screen([]);
     }
-    public function testTrackThrowsSegmentExceptionWhenClientHasNotBeenInitialized(): void
+    public function testTrackThrowsHightouchExceptionWhenClientHasNotBeenInitialized(): void
     {
-        $this->expectException(SegmentException::class);
-        $this->expectExceptionMessage('Segment::init() must be called before any other tracking method.');
+        $this->expectException(HightouchException::class);
+        $this->expectExceptionMessage('Hightouch::init() must be called before any other tracking method.');
 
-        Segment::track([]);
+        Hightouch::track([]);
     }
 
-    private static function resetSegment(): void
+    private static function resetHightouch(): void
     {
-        $reflectedClass = new \ReflectionClass('Segment\Segment');
+        $reflectedClass = new \ReflectionClass('Hightouch\Hightouch');
         $reflectedClass->setStaticPropertyValue('client', null);
     }
 }

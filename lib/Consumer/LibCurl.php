@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Segment\Consumer;
+namespace Hightouch\Consumer;
 
 class LibCurl extends QueueConsumer
 {
@@ -15,7 +15,7 @@ class LibCurl extends QueueConsumer
      * @param array $messages array of all the messages to send
      * @return bool whether the request succeeded
      */
-    public function flushBatch(array $messages): bool
+    protected function flushBatch(array $messages): bool
     {
         $body = $this->payload($messages);
         $payload = json_encode($body);

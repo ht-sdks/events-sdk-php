@@ -2,24 +2,24 @@
 
 declare(strict_types=1);
 
-namespace Segment\Test;
+namespace Hightouch\Test;
 
 use PHPUnit\Framework\TestCase;
-use Segment\Segment;
-use Segment\SegmentException;
+use Hightouch\Hightouch;
+use Hightouch\HightouchException;
 
 class AnalyticsTest extends TestCase
 {
     public function setUp(): void
     {
         date_default_timezone_set('UTC');
-        Segment::init('oq0vdlg7yi', ['debug' => true]);
+        Hightouch::init('oq0vdlg7yi', ['debug' => true]);
     }
 
     public function testTrack(): void
     {
         self::assertTrue(
-            Segment::track(
+            Hightouch::track(
                 [
                     'userId' => 'john',
                     'event'  => 'Module PHP Event',
@@ -31,7 +31,7 @@ class AnalyticsTest extends TestCase
     public function testGroup(): void
     {
         self::assertTrue(
-            Segment::group(
+            Hightouch::group(
                 [
                     'groupId' => 'group-id',
                     'userId'  => 'user-id',
@@ -46,7 +46,7 @@ class AnalyticsTest extends TestCase
     public function testGroupAnonymous(): void
     {
         self::assertTrue(
-            Segment::group(
+            Hightouch::group(
                 [
                     'groupId'     => 'group-id',
                     'anonymousId' => 'anonymous-id',
@@ -60,9 +60,9 @@ class AnalyticsTest extends TestCase
 
     public function testGroupNoUser(): void
     {
-        $this->expectExceptionMessage('Segment::group() requires userId or anonymousId');
-        $this->expectException(SegmentException::class);
-        Segment::group(
+        $this->expectExceptionMessage('Hightouch::group() requires userId or anonymousId');
+        $this->expectException(HightouchException::class);
+        Hightouch::group(
             [
                 'groupId' => 'group-id',
                 'traits'  => [
@@ -75,7 +75,7 @@ class AnalyticsTest extends TestCase
     public function testMicrotime(): void
     {
         self::assertTrue(
-            Segment::page(
+            Hightouch::page(
                 [
                     'anonymousId' => 'anonymous-id',
                     'name'        => 'analytics-php-microtime',
@@ -93,7 +93,7 @@ class AnalyticsTest extends TestCase
     public function testPage(): void
     {
         self::assertTrue(
-            Segment::page(
+            Hightouch::page(
                 [
                     'anonymousId' => 'anonymous-id',
                     'name'        => 'analytics-php',
@@ -109,13 +109,13 @@ class AnalyticsTest extends TestCase
 
     public function testBasicPage(): void
     {
-        self::assertTrue(Segment::page(['anonymousId' => 'anonymous-id']));
+        self::assertTrue(Hightouch::page(['anonymousId' => 'anonymous-id']));
     }
 
     public function testScreen(): void
     {
         self::assertTrue(
-            Segment::screen(
+            Hightouch::screen(
                 [
                     'anonymousId' => 'anonymous-id',
                     'name'        => '2048',
@@ -130,13 +130,13 @@ class AnalyticsTest extends TestCase
 
     public function testBasicScreen(): void
     {
-        self::assertTrue(Segment::screen(['anonymousId' => 'anonymous-id']));
+        self::assertTrue(Hightouch::screen(['anonymousId' => 'anonymous-id']));
     }
 
     public function testIdentify(): void
     {
         self::assertTrue(
-            Segment::identify(
+            Hightouch::identify(
                 [
                     'userId' => 'doe',
                     'traits' => [
@@ -150,10 +150,10 @@ class AnalyticsTest extends TestCase
 
     public function testEmptyTraits(): void
     {
-        self::assertTrue(Segment::identify(['userId' => 'empty-traits']));
+        self::assertTrue(Hightouch::identify(['userId' => 'empty-traits']));
 
         self::assertTrue(
-            Segment::group(
+            Hightouch::group(
                 [
                     'userId'  => 'empty-traits',
                     'groupId' => 'empty-traits',
@@ -165,7 +165,7 @@ class AnalyticsTest extends TestCase
     public function testEmptyArrayTraits(): void
     {
         self::assertTrue(
-            Segment::identify(
+            Hightouch::identify(
                 [
                     'userId' => 'empty-traits',
                     'traits' => [],
@@ -174,7 +174,7 @@ class AnalyticsTest extends TestCase
         );
 
         self::assertTrue(
-            Segment::group(
+            Hightouch::group(
                 [
                     'userId'  => 'empty-traits',
                     'groupId' => 'empty-traits',
@@ -187,7 +187,7 @@ class AnalyticsTest extends TestCase
     public function testEmptyProperties(): void
     {
         self::assertTrue(
-            Segment::track(
+            Hightouch::track(
                 [
                     'userId' => 'user-id',
                     'event'  => 'empty-properties',
@@ -196,7 +196,7 @@ class AnalyticsTest extends TestCase
         );
 
         self::assertTrue(
-            Segment::page(
+            Hightouch::page(
                 [
                     'category' => 'empty-properties',
                     'name'     => 'empty-properties',
@@ -209,7 +209,7 @@ class AnalyticsTest extends TestCase
     public function testEmptyArrayProperties(): void
     {
         self::assertTrue(
-            Segment::track(
+            Hightouch::track(
                 [
                     'userId'     => 'user-id',
                     'event'      => 'empty-properties',
@@ -219,7 +219,7 @@ class AnalyticsTest extends TestCase
         );
 
         self::assertTrue(
-            Segment::page(
+            Hightouch::page(
                 [
                     'category'   => 'empty-properties',
                     'name'       => 'empty-properties',
@@ -233,7 +233,7 @@ class AnalyticsTest extends TestCase
     public function testAlias(): void
     {
         self::assertTrue(
-            Segment::alias(
+            Hightouch::alias(
                 [
                     'previousId' => 'previous-id',
                     'userId'     => 'user-id',
@@ -245,7 +245,7 @@ class AnalyticsTest extends TestCase
     public function testContextEmpty(): void
     {
         self::assertTrue(
-            Segment::track(
+            Hightouch::track(
                 [
                     'userId'  => 'user-id',
                     'event'   => 'Context Test',
@@ -258,7 +258,7 @@ class AnalyticsTest extends TestCase
     public function testContextCustom(): void
     {
         self::assertTrue(
-            Segment::track(
+            Hightouch::track(
                 [
                     'userId'  => 'user-id',
                     'event'   => 'Context Test',
@@ -271,7 +271,7 @@ class AnalyticsTest extends TestCase
     public function testTimestamps(): void
     {
         self::assertTrue(
-            Segment::track(
+            Hightouch::track(
                 [
                     'userId'    => 'user-id',
                     'event'     => 'integer-timestamp',
@@ -281,7 +281,7 @@ class AnalyticsTest extends TestCase
         );
 
         self::assertTrue(
-            Segment::track(
+            Hightouch::track(
                 [
                     'userId'    => 'user-id',
                     'event'     => 'string-integer-timestamp',
@@ -291,7 +291,7 @@ class AnalyticsTest extends TestCase
         );
 
         self::assertTrue(
-            Segment::track(
+            Hightouch::track(
                 [
                     'userId'    => 'user-id',
                     'event'     => 'iso8630-timestamp',
@@ -301,7 +301,7 @@ class AnalyticsTest extends TestCase
         );
 
         self::assertTrue(
-            Segment::track(
+            Hightouch::track(
                 [
                     'userId'    => 'user-id',
                     'event'     => 'iso8601-timestamp',
@@ -311,7 +311,7 @@ class AnalyticsTest extends TestCase
         );
 
         self::assertTrue(
-            Segment::track(
+            Hightouch::track(
                 [
                     'userId'    => 'user-id',
                     'event'     => 'strtotime-timestamp',
@@ -321,7 +321,7 @@ class AnalyticsTest extends TestCase
         );
 
         self::assertTrue(
-            Segment::track(
+            Hightouch::track(
                 [
                     'userId'    => 'user-id',
                     'event'     => 'microtime-timestamp',
@@ -331,7 +331,7 @@ class AnalyticsTest extends TestCase
         );
 
         self::assertTrue(
-            Segment::track(
+            Hightouch::track(
                 [
                     'userId'    => 'user-id',
                     'event'     => 'invalid-float-timestamp',

@@ -6,7 +6,7 @@
 		"hightouchio",
 		"hightouch"
 	],
-	"homepage": "https://segment.com/libraries/php",
+	"homepage": "https://hightouch.com/docs/events/sdks/php",
 	"license": "MIT",
 	"authors": [
 		{
@@ -30,12 +30,12 @@
 	},
 	"autoload": {
 		"psr-4": {
-			"Segment\\": "lib/"
+			"Hightouch\\": "lib/"
 		}
 	},
 	"autoload-dev": {
 		"psr-4": {
-			"Segment\\Test\\": "test/"
+			"Hightouch\\Test\\": "test/"
 		}
 	},
 	"bin": [
@@ -49,7 +49,7 @@
 	},
 	"config": {
 		"allow-plugins": {
-			"segmentio/*": true,
+			"hightouchio/*": true,
 			"dealerdirect/phpcodesniffer-composer-installer": true
 		}
 	}

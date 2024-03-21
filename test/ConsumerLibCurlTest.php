@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Segment\Test;
+namespace Hightouch\Test;
 
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
-use Segment\Client;
+use Hightouch\Client;
 
 class ConsumerLibCurlTest extends TestCase
 {

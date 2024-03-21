@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Segment\Consumer;
+namespace Hightouch\Consumer;
 
 class File extends Consumer
 {
@@ -130,5 +130,13 @@ class File extends Consumer
     public function alias(array $message): bool
     {
         return $this->write($message);
+    }
+
+    /**
+     * no-op
+     */
+    public function flush(): bool
+    {
+        return true;
     }
 }

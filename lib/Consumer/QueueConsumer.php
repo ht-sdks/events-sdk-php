@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Segment\Consumer;
+namespace Hightouch\Consumer;
 
 abstract class QueueConsumer extends Consumer
 {
@@ -121,6 +121,14 @@ abstract class QueueConsumer extends Consumer
 
         return $success;
     }
+
+    /**
+     * Implementation for batch sending messages to the server
+     *
+     * @param array $messages array of all the messages to send
+     * @return bool whether the request succeeded
+     */
+    abstract protected function flushBatch(array $messages): bool;
 
     /**
      * Tracks a user action

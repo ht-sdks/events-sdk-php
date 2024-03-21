@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Segment\Test;
+namespace Hightouch\Test;
 
 use Exception;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
-use Segment\Client;
+use Hightouch\Client;
 
 class ConsumerSocketTest extends TestCase
 {

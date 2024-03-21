@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Segment;
+namespace Hightouch;
 
-use Segment\Consumer\Consumer;
-use Segment\Consumer\File;
-use Segment\Consumer\ForkCurl;
-use Segment\Consumer\LibCurl;
-use Segment\Consumer\Socket;
+use Hightouch\Consumer\Consumer;
+use Hightouch\Consumer\File;
+use Hightouch\Consumer\ForkCurl;
+use Hightouch\Consumer\LibCurl;
+use Hightouch\Consumer\Socket;
 
 class Client
 {
@@ -37,7 +37,7 @@ class Client
 
         if (!array_key_exists($consumer_type, $consumers) && class_exists($consumer_type)) {
             if (!is_subclass_of($consumer_type, Consumer::class)) {
-                throw new SegmentException('Consumers must extend the Segment/Consumer/Consumer abstract class');
+                throw new HightouchException('Consumers must extend the Hightouch/Consumer/Consumer abstract class');
             }
             // Try to resolve it by class name
             $this->consumer = new $consumer_type($secret, $options);
@@ -103,19 +103,19 @@ class Client
     }
 
     /**
-     * Add the segment.io context to the request
+     * Add the hightouch.io context to the request
      * @return array additional context
      */
     private function getDefaultContext(): array
     {
         require __DIR__ . '/Version.php';
 
-        global $SEGMENT_VERSION;
+        global $HIGHTOUCH_VERSION;
 
         return [
             'library' => [
-                'name'     => 'analytics-php',
-                'version'  => $SEGMENT_VERSION,
+                'name'     => 'events-sdk-php',
+                'version'  => $HIGHTOUCH_VERSION,
                 'consumer' => $this->consumer->getConsumer(),
             ],
         ];
@@ -262,11 +262,7 @@ class Client
      */
     public function flush(): bool
     {
-        if (method_exists($this->consumer, 'flush')) {
-            return $this->consumer->flush();
-        }
-
-        return true;
+        return $this->consumer->flush();
     }
 
     /**

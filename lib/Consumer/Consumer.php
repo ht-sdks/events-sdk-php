@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Segment\Consumer;
+namespace Hightouch\Consumer;
 
 abstract class Consumer
 {
@@ -24,6 +24,8 @@ abstract class Consumer
         $this->secret = $secret;
         $this->options = $options;
     }
+
+    abstract public function __destruct();
 
     /**
      * Tracks a user action
@@ -74,6 +76,11 @@ abstract class Consumer
     abstract public function alias(array $message): bool;
 
     /**
+     * Flushes our queue of messages to the server
+     */
+    abstract public function flush(): bool;
+
+    /**
      * Getter method for consumer type.
      *
      * @return string
@@ -89,7 +96,7 @@ abstract class Consumer
      * @param int $code
      * @param string $msg
      */
-    protected function handleError(int $code, string $msg): void
+    protected function handleError(int $code, string|array $msg): void
     {
         if (isset($this->options['error_handler'])) {
             $handler = $this->options['error_handler'];

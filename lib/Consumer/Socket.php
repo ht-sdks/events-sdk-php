@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Segment\Consumer;
+namespace Hightouch\Consumer;
 
 class Socket extends QueueConsumer
 {
@@ -35,7 +35,7 @@ class Socket extends QueueConsumer
         parent::__construct($secret, $options);
     }
 
-    public function flushBatch($batch): bool
+    protected function flushBatch($batch): bool
     {
         $socket = $this->createSocket();
 
