@@ -1,4 +1,4 @@
-name: "Tests"
+name: "CI"
 
 on:
   push:
@@ -6,7 +6,6 @@ on:
   workflow_dispatch:
 
 jobs:
-
   coding-standard:
     runs-on: ubuntu-22.04
     name: Coding standards
@@ -18,7 +17,7 @@ jobs:
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.1'
+          php-version: "8.3"
           coverage: none
           tools: cs2pr
 
@@ -38,7 +37,7 @@ jobs:
     runs-on: ubuntu-22.04
     strategy:
       matrix:
-        php: ['7.4', '8.0', '8.1', '8.2', '8.3']
+        php: ["7.4", "8.0", "8.1", "8.2", "8.3"]
         experimental: [false]
 
     name: "Lint: PHP ${{ matrix.php }}"
@@ -69,30 +68,30 @@ jobs:
         run: composer lint
 
   test:
-    needs: ['coding-standard', 'lint']
+    needs: ["coding-standard", "lint"]
     runs-on: ubuntu-22.04
     strategy:
       matrix:
-        php: ['7.4', '8.0', '8.1', '8.2', '8.3']
+        php: ["7.4", "8.0", "8.1", "8.2", "8.3"]
         coverage: [false]
         experimental: [false]
         include:
           # Run code coverage on high/low PHP.
-          - php: '7.4'
+          - php: "7.4"
             coverage: true
             experimental: false
-          - php: '8.0'
+          - php: "8.0"
             coverage: true
             experimental: false
-          - php: '8.1'
+          - php: "8.1"
             coverage: true
             experimental: false
-          - php: '8.2'
+          - php: "8.2"
             coverage: true
-            experimental: false  
-          - php: '8.3'
+            experimental: false
+          - php: "8.3"
             coverage: true
-            experimental: false              
+            experimental: false
 
     name: "Test: PHP ${{ matrix.php }}"
 
@@ -122,18 +121,6 @@ jobs:
         with:
           composer-options: --ignore-platform-reqs
 
-      - name: Run tests, no code coverage
-        if: ${{ matrix.coverage }}
-        run: ./vendor/bin/phpunit --no-coverage
-
       - name: Run tests with code coverage
         if: ${{ matrix.coverage }}
         run: ./vendor/bin/phpunit
-
-      - name: Send coverage report to Codecov
-        if: ${{ success() && matrix.coverage }}
-        uses: codecov/codecov-action@v3
-        with:
-          files: ./build/logs/clover.xml
-          fail_ci_if_error: true
-          verbose: true
