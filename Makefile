@@ -9,22 +9,9 @@ vendor: composer.phar
 composer.phar:
 	@curl -sS https://getcomposer.org/installer | php
 
-test: lint
-	@vendor/bin/phpunit --colors test/
-	@php ./composer.phar validate
-
-lint: dependencies
-	@if php -r 'exit(version_compare(PHP_VERSION, "5.5", ">=") ? 0 : 1);'; \
-	then \
-		php ./composer.phar require overtrue/phplint --dev; \
-		php ./composer.phar require squizlabs/php_codesniffer --dev; \
-		php ./composer.phar require dealerdirect/phpcodesniffer-composer-installer --dev; \
-		
-		./vendor/bin/phplint; \
-		./vendor/bin/phpcs; \
-	else \
-		printf "Please update PHP version to 5.5 or above for code formatting."; \
-	fi
+test:
+	@vendor/bin/phpunit
+	@php composer.phar validate
 
 release:
 	@printf "releasing ${VERSION}..."
@@ -38,4 +25,4 @@ clean:
 		vendor \
 		composer.lock
 
-.PHONY: bootstrap release clean
+.PHONY: bootstrap test release clean

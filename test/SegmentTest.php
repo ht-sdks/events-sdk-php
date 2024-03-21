@@ -67,12 +67,7 @@ final class SegmentTest extends Framework\TestCase
 
     private static function resetSegment(): void
     {
-        $property = new \ReflectionProperty(
-            Segment::class,
-            'client'
-        );
-
-        $property->setAccessible(true);
-        $property->setValue(null);
+        $reflectedClass = new \ReflectionClass('Segment\Segment');
+        $reflectedClass->setStaticPropertyValue('client', null);
     }
 }
