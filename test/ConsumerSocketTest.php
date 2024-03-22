@@ -70,7 +70,7 @@ class ConsumerSocketTest extends TestCase
             $this->client->page(
                 [
                     'userId'     => 'user-id',
-                    'name'       => 'analytics-php',
+                    'name'       => 'events-sdk-php',
                     'category'   => 'socket',
                     'properties' => ['url' => 'https://a.url/'],
                 ]

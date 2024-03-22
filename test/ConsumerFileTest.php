@@ -91,7 +91,7 @@ class ConsumerFileTest extends TestCase
     {
         self::assertTrue($this->client->page([
             'userId'     => 'user-id',
-            'name'       => 'analytics-php',
+            'name'       => 'events-sdk-php',
             'category'   => 'test',
             'properties' => ['url' => 'https://a.url/'],
         ]));

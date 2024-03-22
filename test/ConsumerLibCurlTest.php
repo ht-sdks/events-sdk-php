@@ -59,7 +59,7 @@ class ConsumerLibCurlTest extends TestCase
     {
         self::assertTrue($this->client->page([
             'userId'     => 'lib-curl-page',
-            'name'       => 'analytics-php',
+            'name'       => 'events-sdk-php',
             'category'   => 'fork-curl',
             'properties' => ['url' => 'https://a.url/'],
         ]));

@@ -13,7 +13,7 @@ class AnalyticsTest extends TestCase
     public function setUp(): void
     {
         date_default_timezone_set('UTC');
-        Hightouch::init('oq0vdlg7yi', ['debug' => true]);
+        Hightouch::init('WRITE_KEY', ['debug' => true]);
     }
 
     public function testTrack(): void
@@ -78,7 +78,7 @@ class AnalyticsTest extends TestCase
             Hightouch::page(
                 [
                     'anonymousId' => 'anonymous-id',
-                    'name'        => 'analytics-php-microtime',
+                    'name'        => 'events-sdk-php',
                     'category'    => 'docs',
                     'timestamp'   => microtime(true),
                     'properties'  => [
@@ -96,7 +96,7 @@ class AnalyticsTest extends TestCase
             Hightouch::page(
                 [
                     'anonymousId' => 'anonymous-id',
-                    'name'        => 'analytics-php',
+                    'name'        => 'events-sdk-php',
                     'category'    => 'docs',
                     'properties'  => [
                         'path' => '/docs/libraries/php/',

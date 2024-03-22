@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <ruleset name="PHP_CodeSniffer">
-  <description>The coding standard for analytics-php project.</description>
+  <description>The coding standard for events-sdk-php</description>
   <config name="installed_paths" value="vendor/slevomat/coding-standard/SlevomatCodingStandard"/>
   <file>./lib/</file>
   <file>./test/</file>

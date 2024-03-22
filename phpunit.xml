@@ -5,7 +5,7 @@
          colors="true"
 >
   <testsuites>
-    <testsuite name="analytics-php">
+    <testsuite name="events-sdk-php">
       <directory>test</directory>
     </testsuite>
   </testsuites>
