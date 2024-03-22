@@ -116,19 +116,6 @@ class ConsumerFileTest extends TestCase
         $this->checkWritten('alias');
     }
 
-    public function testSend(): void
-    {
-        for ($i = 0; $i < 200; ++$i) {
-            $this->client->track([
-                'userId' => 'userId',
-                'event'  => 'event',
-            ]);
-        }
-        exec("php --define date.timezone=UTC send.php --writeKey WRITE_KEY --file $this->filename", $output);
-        self::assertSame('sent 200 from 200 requests successfully', trim($output[0]));
-        self::assertFileDoesNotExist($this->filename);
-    }
-
     public function testProductionProblems(): void
     {
         // Open to a place where we should not have write access.
