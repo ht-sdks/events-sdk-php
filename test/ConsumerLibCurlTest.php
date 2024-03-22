@@ -14,7 +14,7 @@ class ConsumerLibCurlTest extends TestCase
 
     public function setUp(): void
     {
-        $this->markTestSkipped('skipping until we have mocking in place');
+        $this->markTestSkipped('needs mocking');
 
         date_default_timezone_set('UTC');
         $this->client = new Client(
