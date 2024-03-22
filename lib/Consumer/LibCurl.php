@@ -53,7 +53,7 @@ class LibCurl extends QueueConsumer
 
         $backoff = 100; // Set initial waiting time to 100ms
 
-        while ($backoff < $this->maximum_backoff_duration) {
+        while ($backoff < $this->max_backoff_ms) {
             // open connection
             $ch = curl_init();
 

@@ -12,14 +12,14 @@ abstract class QueueConsumer extends Consumer
      * @var array<int,mixed>
      */
     protected array $queue;
-    protected int $max_queue_size = 10000;
-    protected int $max_queue_size_bytes = 33554432; //32M
+    protected int $max_queue_size = 10_000;
+    protected int $max_queue_size_bytes = 33554432; // 32mb
     protected int $flush_at = 100;
-    protected int $max_batch_size_bytes = 512000; //500kb
-    protected int $max_item_size_bytes = 32000; // 32kb
-    protected int $maximum_backoff_duration = 10000; // Set maximum waiting limit to 10s
+    protected int $max_batch_size_bytes = 512_000; // 500kb
+    protected int $max_item_size_bytes = 32_000; // 32kb
+    protected int $max_backoff_ms = 10_000; // 10s
     protected bool $compress_request = false;
-    protected int $flush_interval_in_mills = 10000; //frequency in milliseconds to send data, default 10
+    protected int $flush_interval_ms = 10_000; // 10s
 
     /**
      * @param string $writeKey
@@ -62,7 +62,7 @@ abstract class QueueConsumer extends Consumer
                 $msg = 'Flush interval must not be less than 1 second';
                 error_log('[Hightouch][' . $this->type . '] ' . $msg);
             } else {
-                $this->flush_interval_in_mills = $options['flush_interval'];
+                $this->flush_interval_ms = $options['flush_interval'];
             }
         }
 
@@ -98,7 +98,7 @@ abstract class QueueConsumer extends Consumer
             $count = count($this->queue);
 
             if ($count > 0) {
-                usleep($this->flush_interval_in_mills * 1000);
+                usleep($this->flush_interval_ms * 1000);
             }
         }
 

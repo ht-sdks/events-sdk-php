@@ -181,7 +181,7 @@ class Socket extends QueueConsumer
             // Error code 429 indicates rate limited.
             // Retry uploading in these cases.
             if (($statusCode >= 500 && $statusCode <= 600) || $statusCode === 429 || $statusCode === 0) {
-                if ($backoff >= $this->maximum_backoff_duration) {
+                if ($backoff >= $this->max_backoff_ms) {
                     break;
                 }
 
