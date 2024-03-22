@@ -7,56 +7,12 @@ namespace Hightouch\Consumer;
 /**
  * InMemory consumer intended for testing purposes
  */
-class InMemory extends Consumer
+class InMemory extends QueueConsumer
 {
   protected string $type = 'InMemory';
 
-  private array $queue = [];
-
-  public function __destruct()
+  protected function flushBatch(array $messages): bool
   {
-    $this->flush();
-  }
-
-  public function track(array $message): bool
-  {
-    return $this->write($message);
-  }
-
-  public function identify(array $message): bool
-  {
-    return $this->write($message);
-  }
-
-  public function group(array $message): bool
-  {
-    return $this->write($message);
-  }
-
-  public function page(array $message): bool
-  {
-    return $this->write($message);
-  }
-
-  public function screen(array $message): bool
-  {
-    return $this->write($message);
-  }
-
-  public function alias(array $message): bool
-  {
-    return $this->write($message);
-  }
-
-  public function flush(): bool
-  {
-    $this->queue = [];
-    return true;
-  }
-
-  private function write(array $body): bool
-  {
-    $this->queue[] = $body;
     return true;
   }
 }
