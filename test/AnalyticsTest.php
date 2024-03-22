@@ -86,7 +86,6 @@ class AnalyticsTest extends TestCase
                     'timestamp'   => microtime(true),
                     'properties'  => [
                         'path' => '/docs/libraries/php/',
-                        'url'  => 'https://segment.io/docs/libraries/php/',
                     ],
                 ]
             )
@@ -103,7 +102,6 @@ class AnalyticsTest extends TestCase
                     'category'    => 'docs',
                     'properties'  => [
                         'path' => '/docs/libraries/php/',
-                        'url'  => 'https://segment.io/docs/libraries/php/',
                     ],
                 ]
             )
