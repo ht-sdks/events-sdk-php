@@ -95,7 +95,7 @@ abstract class Consumer
      * @param int $code
      * @param string|array $msg
      */
-    protected function handleError(int $code, mixed $msg): void
+    protected function handleError(int $code, $msg): void
     {
         if (isset($this->options['error_handler'])) {
             $handler = $this->options['error_handler'];
