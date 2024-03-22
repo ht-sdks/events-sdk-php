@@ -1,17 +1,10 @@
 bootstrap:
 	.buildscript/bootstrap.sh
 
-dependencies: vendor
-
-vendor: composer.phar
-	@php ./composer.phar install
-
-composer.phar:
-	@curl -sS https://getcomposer.org/installer | php
+dependencies: composer install
 
 test:
 	@vendor/bin/phpunit
-	@php composer.phar validate
 
 release:
 	@printf "releasing ${VERSION}..."
@@ -19,10 +12,6 @@ release:
 	@git changelog -t ${VERSION}
 	@git release ${VERSION}
 
-clean:
-	rm -rf \
-		composer.phar \
-		vendor \
-		composer.lock
+clean: rm -rf vendor composer.lock
 
 .PHONY: bootstrap test release clean
