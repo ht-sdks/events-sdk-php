@@ -75,7 +75,7 @@ Hightouch::flush();
 
 function usage(): string
 {
-    return "\n  Usage: analytics --type <track|identify|page|group|alias> [options]\n\n";
+    return "\n  Usage: htevents --type <track|identify|page|group|alias> [options]\n\n";
 }
 
 function error($message): void
