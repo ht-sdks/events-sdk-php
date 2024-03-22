@@ -9,6 +9,7 @@ use Hightouch\Consumer\File;
 use Hightouch\Consumer\ForkCurl;
 use Hightouch\Consumer\LibCurl;
 use Hightouch\Consumer\Socket;
+use Hightouch\Consumer\InMemory;
 
 class Client
 {
@@ -27,15 +28,21 @@ class Client
             'file'      => File::class,
             'fork_curl' => ForkCurl::class,
             'lib_curl'  => LibCurl::class,
+            'memory'    => InMemory::class,
         ];
         // Use lib_curl by default
         $consumer_type = $options['consumer'] ?? 'lib_curl';
 
-        if (!array_key_exists($consumer_type, $consumers) && class_exists($consumer_type)) {
+        if (!array_key_exists($consumer_type, $consumers)) {
+            if (!class_exists($consumer_type)) {
+                throw new HightouchException("consumer class does not exist: $consumer_type");
+            }
+
             if (!is_subclass_of($consumer_type, Consumer::class)) {
                 throw new HightouchException('Consumers must extend the Hightouch/Consumer/Consumer abstract class');
             }
-            // Try to resolve it by class name
+
+            // resolve by class name
             $this->consumer = new $consumer_type($writeKey, $options);
             return;
         }
