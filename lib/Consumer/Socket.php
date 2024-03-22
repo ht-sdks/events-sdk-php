@@ -10,7 +10,7 @@ class Socket extends QueueConsumer
 
     private string $host = 'us-east-1.hightouch-events.com';
     private string $protocol = 'ssl'; // ssl or tls
-    private int $timeout = 5;
+    private float $timeout = 5;
     private bool $socket_failed = false;
 
     /**
