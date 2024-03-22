@@ -1,7 +1,7 @@
 composer.lock
 vendor
 composer.phar
-test/analytics.log
+test/htevents.log
 /.vscode
 .phplint-cache
 /.idea

@@ -8,6 +8,31 @@ class LibCurl extends QueueConsumer
 {
     protected string $type = 'LibCurl';
 
+    private string $host = 'https://us-east-1.hightouch-events.com';
+    private int $timeout = 0; // infinite
+    private int $connectTimeout = 300;
+
+    /**
+     * @param string $writeKey
+     * @param array $options
+     */
+    public function __construct(string $writeKey, array $options = [])
+    {
+        parent::__construct($writeKey, $options);
+
+        if (isset($options['host'])) {
+            $this->host = $options['host'];
+        }
+
+        if (isset($options['timeout'], $options['curl_timeout'])) {
+            $this->timeout = $options['timeout'] || $options['curl_timeout'];
+        }
+
+        if (isset($options['connecttimeout'], $options['curl_connecttimeout'])) {
+            $this->connectTimeout = $options['connecttimeout'] || $options['curl_connecttimeout'];
+        }
+    }
+
     /**
      * Make a sync request to our API. If debug is
      * enabled, we wait for the response
@@ -19,19 +44,12 @@ class LibCurl extends QueueConsumer
     {
         $body = $this->payload($messages);
         $payload = json_encode($body);
-        $secret = $this->secret;
 
         if ($this->compress_request) {
             $payload = gzencode($payload);
         }
 
-        if ($this->host) {
-            $host = $this->host;
-        } else {
-            $host = 'api.segment.io';
-        }
-        $path = '/v1/batch';
-        $url = $this->protocol . $host . $path;
+        $url = "$this->host/v1/batch";
 
         $backoff = 100; // Set initial waiting time to 100ms
 
@@ -40,10 +58,10 @@ class LibCurl extends QueueConsumer
             $ch = curl_init();
 
             // set the url, number of POST vars, POST data
-            curl_setopt($ch, CURLOPT_USERPWD, $secret . ':');
+            curl_setopt($ch, CURLOPT_USERPWD, $this->writeKey . ':');
             curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
-            curl_setopt($ch, CURLOPT_TIMEOUT, $this->curl_timeout);
-            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $this->curl_connecttimeout);
+            curl_setopt($ch, CURLOPT_TIMEOUT, $this->timeout);
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $this->connectTimeout);
 
             // set variables for headers
             $header = [];

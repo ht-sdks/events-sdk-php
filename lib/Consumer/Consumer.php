@@ -12,16 +12,15 @@ abstract class Consumer
      * @var array<string,mixed>
      */
     protected array $options;
-    protected string $secret;
+    protected string $writeKey;
 
     /**
-     * Store our secret and options as part of this consumer
-     * @param string $secret
+     * @param string $writeKey
      * @param array $options
      */
-    public function __construct(string $secret, array $options = [])
+    public function __construct(string $writeKey, array $options = [])
     {
-        $this->secret = $secret;
+        $this->writeKey = $writeKey;
         $this->options = $options;
     }
 
@@ -104,7 +103,7 @@ abstract class Consumer
         }
 
         if ($this->debug()) {
-            error_log('[Analytics][' . $this->type . '] ' . $msg);
+            error_log('[Hightouch][' . $this->type . '] ' . $msg);
         }
     }
 

@@ -11,13 +11,13 @@ class Hightouch
     /**
      * Initializes the default client to use. Uses the libcurl consumer by default.
      *
-     * @param string $secret your project's secret key
+     * @param string $writeKey your write key
      * @param array $options passed straight to the client
      */
-    public static function init(string $secret, array $options = []): void
+    public static function init(string $writeKey, array $options = []): void
     {
-        self::assert($secret, 'Hightouch::init() requires secret');
-        self::$client = new Client($secret, $options);
+        self::assert($writeKey, 'Hightouch::init() requires writeKey');
+        self::$client = new Client($writeKey, $options);
     }
 
     /**

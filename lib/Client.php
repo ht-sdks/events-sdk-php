@@ -15,24 +15,20 @@ class Client
     protected Consumer $consumer;
 
     /**
-     * Create a new analytics object with your app's secret
-     * key
-     *
-     * @param string $secret
+     * @param string $writeKey
      * @param array $options array of consumer options [optional]
      * @param string Consumer constructor to use, libcurl by default.
      *
      */
-    public function __construct(string $secret, array $options = [])
+    public function __construct(string $writeKey, array $options = [])
     {
-
         $consumers = [
             'socket'    => Socket::class,
             'file'      => File::class,
             'fork_curl' => ForkCurl::class,
             'lib_curl'  => LibCurl::class,
         ];
-        // Use our socket libcurl by default
+        // Use lib_curl by default
         $consumer_type = $options['consumer'] ?? 'lib_curl';
 
         if (!array_key_exists($consumer_type, $consumers) && class_exists($consumer_type)) {
@@ -40,13 +36,13 @@ class Client
                 throw new HightouchException('Consumers must extend the Hightouch/Consumer/Consumer abstract class');
             }
             // Try to resolve it by class name
-            $this->consumer = new $consumer_type($secret, $options);
+            $this->consumer = new $consumer_type($writeKey, $options);
             return;
         }
 
         $Consumer = $consumers[$consumer_type];
 
-        $this->consumer = new $Consumer($secret, $options);
+        $this->consumer = new $Consumer($writeKey, $options);
     }
 
     public function __destruct()

@@ -20,8 +20,8 @@ $args = parse($argv);
  * Make sure both are set
  */
 
-if (!isset($args['secret'])) {
-    die('--secret must be given');
+if (!isset($args['writeKey'])) {
+    die('--writeKey must be given');
 }
 if (!isset($args['file'])) {
     die('--file must be given');
@@ -39,7 +39,7 @@ if ($file[0] !== '/') {
 
 $dir = dirname($file);
 $old = $file;
-$file = $dir . '/analytics-' . mt_rand() . '.log';
+$file = $dir . '/htevents-' . mt_rand() . '.log';
 
 if (!file_exists($old)) {
     print("file: $old does not exist");
@@ -62,7 +62,7 @@ $lines = explode("\n", $contents);
  * Initialize the client.
  */
 
-Hightouch::init($args['secret'], [
+Hightouch::init($args['writeKey'], [
     'debug' => true,
     'error_handler' => static function ($code, $msg) {
         print("$code: $msg\n");
@@ -93,7 +93,7 @@ foreach ($lines as $line) {
         if ($libCurlResponse) {
             $successful += count($currentBatch) - 1;
             //} else {
-            // todo: maybe write batch to analytics-error.log for more controlled errorhandling
+            // todo: maybe write batch to htevents-error.log for more controlled errorhandling
         }
         $currentBatch = [];
     }
