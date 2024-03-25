@@ -5,6 +5,7 @@
 		"analytics",
 		"events",
 		"htevents",
+		"ht-sdks",
 		"hightouch"
 	],
 	"homepage": "https://github.com/ht-sdks/events-sdk-php",
@@ -50,7 +51,7 @@
 	},
 	"config": {
 		"allow-plugins": {
-			"hightouchio/*": true,
+			"ht-sdks/*": true,
 			"dealerdirect/phpcodesniffer-composer-installer": true
 		}
 	}
