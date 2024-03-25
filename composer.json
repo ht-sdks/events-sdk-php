@@ -7,7 +7,7 @@
 		"htevents",
 		"hightouch"
 	],
-	"homepage": "https://hightouch.com/docs/events/sdks/php",
+	"homepage": "https://github.com/ht-sdks/events-sdk-php",
 	"license": "MIT",
 	"authors": [
 		{
