@@ -8,7 +8,7 @@ use PHPUnit\Framework\TestCase;
 use Hightouch\Hightouch;
 use Hightouch\HightouchException;
 
-class AnalyticsTest extends TestCase
+class HightouchEventsTest extends TestCase
 {
     public function setUp(): void
     {
