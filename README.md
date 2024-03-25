@@ -21,7 +21,7 @@ The links bellow should provide all the documentation needed to make the best us
 ## Usage
 
 ```php
-use Hightouch\\Hightouch;
+use Hightouch\Hightouch;
 
 Hightouch::init('WRITE_KEY', [
   'host' => 'https://us-east-1.hightouch-events.com',
