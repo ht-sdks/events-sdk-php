@@ -2,11 +2,26 @@
 
 declare(strict_types=1);
 
-namespace Segment\Consumer;
+namespace Hightouch\Consumer;
 
 class ForkCurl extends QueueConsumer
 {
     protected string $type = 'ForkCurl';
+
+    private string $host = 'https://us-east-1.hightouch-events.com';
+
+    /**
+     * @param string $writeKey
+     * @param array $options
+     */
+    public function __construct(string $writeKey, array $options = [])
+    {
+        parent::__construct($writeKey, $options);
+
+        if (isset($options['host'])) {
+            $this->host = $options['host'];
+        }
+    }
 
     /**
      * Make an async request to our API. Fork a curl process, immediately send
@@ -14,24 +29,18 @@ class ForkCurl extends QueueConsumer
      * @param array $messages array of all the messages to send
      * @return bool whether the request succeeded
      */
-    public function flushBatch(array $messages): bool
+    protected function flushBatch(array $messages): bool
     {
         $body = $this->payload($messages);
         $payload = json_encode($body);
 
         // Escape for shell usage.
         $payload = escapeshellarg($payload);
-        $secret = escapeshellarg($this->secret);
+        $writeKey = escapeshellarg($this->writeKey);
 
-        if ($this->host) {
-            $host = $this->host;
-        } else {
-            $host = 'api.segment.io';
-        }
-        $path = '/v1/batch';
-        $url = $this->protocol . $host . $path;
+        $url = "$this->host/v1/batch";
 
-        $cmd = "curl -u $secret: -X POST -H 'Content-Type: application/json'";
+        $cmd = "curl -u $writeKey: -X POST -H 'Content-Type: application/json'";
 
         $tmpfname = '';
         if ($this->compress_request) {
@@ -57,7 +66,7 @@ class ForkCurl extends QueueConsumer
         // Verify payload size is below 512KB
         if (strlen($payload) >= 500 * 1024) {
             $msg = 'Payload size is larger than 512KB';
-            error_log('[Analytics][' . $this->type . '] ' . $msg);
+            error_log('[Hightouch][' . $this->type . '] ' . $msg);
 
             return false;
         }

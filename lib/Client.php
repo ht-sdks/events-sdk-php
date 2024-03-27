@@ -2,51 +2,54 @@
 
 declare(strict_types=1);
 
-namespace Segment;
+namespace Hightouch;
 
-use Segment\Consumer\Consumer;
-use Segment\Consumer\File;
-use Segment\Consumer\ForkCurl;
-use Segment\Consumer\LibCurl;
-use Segment\Consumer\Socket;
+use Hightouch\Consumer\Consumer;
+use Hightouch\Consumer\File;
+use Hightouch\Consumer\ForkCurl;
+use Hightouch\Consumer\LibCurl;
+use Hightouch\Consumer\Socket;
+use Hightouch\Consumer\InMemory;
 
 class Client
 {
     protected Consumer $consumer;
 
     /**
-     * Create a new analytics object with your app's secret
-     * key
-     *
-     * @param string $secret
+     * @param string $writeKey
      * @param array $options array of consumer options [optional]
      * @param string Consumer constructor to use, libcurl by default.
      *
      */
-    public function __construct(string $secret, array $options = [])
+    public function __construct(string $writeKey, array $options = [])
     {
-
         $consumers = [
             'socket'    => Socket::class,
             'file'      => File::class,
             'fork_curl' => ForkCurl::class,
             'lib_curl'  => LibCurl::class,
+            'memory'    => InMemory::class,
         ];
-        // Use our socket libcurl by default
+        // Use lib_curl by default
         $consumer_type = $options['consumer'] ?? 'lib_curl';
 
-        if (!array_key_exists($consumer_type, $consumers) && class_exists($consumer_type)) {
-            if (!is_subclass_of($consumer_type, Consumer::class)) {
-                throw new SegmentException('Consumers must extend the Segment/Consumer/Consumer abstract class');
+        if (!array_key_exists($consumer_type, $consumers)) {
+            if (!class_exists($consumer_type)) {
+                throw new HightouchException("consumer class does not exist: $consumer_type");
             }
-            // Try to resolve it by class name
-            $this->consumer = new $consumer_type($secret, $options);
+
+            if (!is_subclass_of($consumer_type, Consumer::class)) {
+                throw new HightouchException('Consumers must extend the Hightouch/Consumer/Consumer abstract class');
+            }
+
+            // resolve by class name
+            $this->consumer = new $consumer_type($writeKey, $options);
             return;
         }
 
         $Consumer = $consumers[$consumer_type];
 
-        $this->consumer = new $Consumer($secret, $options);
+        $this->consumer = new $Consumer($writeKey, $options);
     }
 
     public function __destruct()
@@ -103,19 +106,19 @@ class Client
     }
 
     /**
-     * Add the segment.io context to the request
+     * Add the hightouch.io context to the request
      * @return array additional context
      */
     private function getDefaultContext(): array
     {
         require __DIR__ . '/Version.php';
 
-        global $SEGMENT_VERSION;
+        global $HIGHTOUCH_VERSION;
 
         return [
             'library' => [
-                'name'     => 'analytics-php',
-                'version'  => $SEGMENT_VERSION,
+                'name'     => 'events-sdk-php',
+                'version'  => $HIGHTOUCH_VERSION,
                 'consumer' => $this->consumer->getConsumer(),
             ],
         ];
@@ -262,11 +265,7 @@ class Client
      */
     public function flush(): bool
     {
-        if (method_exists($this->consumer, 'flush')) {
-            return $this->consumer->flush();
-        }
-
-        return true;
+        return $this->consumer->flush();
     }
 
     /**

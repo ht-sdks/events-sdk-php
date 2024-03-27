@@ -3,10 +3,12 @@
 	"description": "Hightouch Events SDK PHP",
 	"keywords": [
 		"analytics",
-		"hightouchio",
+		"events",
+		"htevents",
+		"ht-sdks",
 		"hightouch"
 	],
-	"homepage": "https://segment.com/libraries/php",
+	"homepage": "https://github.com/ht-sdks/events-sdk-php",
 	"license": "MIT",
 	"authors": [
 		{
@@ -30,16 +32,16 @@
 	},
 	"autoload": {
 		"psr-4": {
-			"Segment\\": "lib/"
+			"Hightouch\\": "lib/"
 		}
 	},
 	"autoload-dev": {
 		"psr-4": {
-			"Segment\\Test\\": "test/"
+			"Hightouch\\Test\\": "test/"
 		}
 	},
 	"bin": [
-		"bin/analytics"
+		"bin/htevents"
 	],
 	"scripts": {
 		"test": "./vendor/bin/phpunit --no-coverage",
@@ -49,7 +51,7 @@
 	},
 	"config": {
 		"allow-plugins": {
-			"segmentio/*": true,
+			"ht-sdks/*": true,
 			"dealerdirect/phpcodesniffer-composer-installer": true
 		}
 	}

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Segment\Consumer;
+namespace Hightouch\Consumer;
 
 abstract class Consumer
 {
@@ -12,18 +12,19 @@ abstract class Consumer
      * @var array<string,mixed>
      */
     protected array $options;
-    protected string $secret;
+    protected string $writeKey;
 
     /**
-     * Store our secret and options as part of this consumer
-     * @param string $secret
+     * @param string $writeKey
      * @param array $options
      */
-    public function __construct(string $secret, array $options = [])
+    public function __construct(string $writeKey, array $options = [])
     {
-        $this->secret = $secret;
+        $this->writeKey = $writeKey;
         $this->options = $options;
     }
+
+    abstract public function __destruct();
 
     /**
      * Tracks a user action
@@ -74,6 +75,11 @@ abstract class Consumer
     abstract public function alias(array $message): bool;
 
     /**
+     * Flushes our queue of messages to the server
+     */
+    abstract public function flush(): bool;
+
+    /**
      * Getter method for consumer type.
      *
      * @return string
@@ -87,9 +93,9 @@ abstract class Consumer
      * On an error, try and call the error handler, if debugging output to
      * error_log as well.
      * @param int $code
-     * @param string $msg
+     * @param string|array $msg
      */
-    protected function handleError(int $code, string $msg): void
+    protected function handleError(int $code, $msg): void
     {
         if (isset($this->options['error_handler'])) {
             $handler = $this->options['error_handler'];
@@ -97,7 +103,7 @@ abstract class Consumer
         }
 
         if ($this->debug()) {
-            error_log('[Analytics][' . $this->type . '] ' . $msg);
+            error_log('[Hightouch][' . $this->type . '] ' . $msg);
         }
     }
 

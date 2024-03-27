@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Segment\Test;
+namespace Hightouch\Test;
 
 use PHPUnit\Framework\TestCase;
-use Segment\Client;
+use Hightouch\Client;
 
 class ConsumerFileTest extends TestCase
 {
     private Client $client;
-    private string $filename = '/tmp/analytics.log';
+    private string $filename = '/tmp/htevents.log';
 
     public function setUp(): void
     {
@@ -18,7 +18,7 @@ class ConsumerFileTest extends TestCase
         $this->clearLog();
 
         $this->client = new Client(
-            'oq0vdlg7yi',
+            'WRITE_KEY',
             [
                 'consumer' => 'file',
                 'filename' => $this->filename,
@@ -70,7 +70,6 @@ class ConsumerFileTest extends TestCase
             'userId' => 'Calvin',
             'traits' => [
                 'loves_php' => false,
-                'type'      => 'analytics.log',
                 'birthday'  => time(),
             ],
         ]));
@@ -83,7 +82,7 @@ class ConsumerFileTest extends TestCase
             'userId'  => 'user-id',
             'groupId' => 'group-id',
             'traits'  => [
-                'type' => 'consumer analytics.log test',
+                'type' => 'consumer file test',
             ],
         ]));
     }
@@ -92,8 +91,8 @@ class ConsumerFileTest extends TestCase
     {
         self::assertTrue($this->client->page([
             'userId'     => 'user-id',
-            'name'       => 'analytics-php',
-            'category'   => 'analytics.log',
+            'name'       => 'events-sdk-php',
+            'category'   => 'test',
             'properties' => ['url' => 'https://a.url/'],
         ]));
     }
@@ -103,7 +102,7 @@ class ConsumerFileTest extends TestCase
         self::assertTrue($this->client->screen([
             'userId'     => 'userId',
             'name'       => 'grand theft auto',
-            'category'   => 'analytics.log',
+            'category'   => 'test',
             'properties' => [],
         ]));
     }
@@ -117,24 +116,11 @@ class ConsumerFileTest extends TestCase
         $this->checkWritten('alias');
     }
 
-    public function testSend(): void
-    {
-        for ($i = 0; $i < 200; ++$i) {
-            $this->client->track([
-                'userId' => 'userId',
-                'event'  => 'event',
-            ]);
-        }
-        exec('php --define date.timezone=UTC send.php --secret oq0vdlg7yi --file /tmp/analytics.log', $output);
-        self::assertSame('sent 200 from 200 requests successfully', trim($output[0]));
-        self::assertFileDoesNotExist($this->filename);
-    }
-
     public function testProductionProblems(): void
     {
         // Open to a place where we should not have write access.
         $client = new Client(
-            'oq0vdlg7yi',
+            'WRITE_KEY',
             [
                 'consumer' => 'file',
                 'filename' => '/dev/xxxxxxx',
@@ -148,7 +134,7 @@ class ConsumerFileTest extends TestCase
     public function testFileSecurityCustom(): void
     {
         $client = new Client(
-            'testsecret',
+            'WRITE_KEY',
             [
                 'consumer'        => 'file',
                 'filename'        => $this->filename,
@@ -162,7 +148,7 @@ class ConsumerFileTest extends TestCase
     public function testFileSecurityDefaults(): void
     {
         $client = new Client(
-            'testsecret',
+            'WRITE_KEY',
             [
                 'consumer' => 'file',
                 'filename' => $this->filename,

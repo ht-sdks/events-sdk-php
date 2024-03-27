@@ -2,40 +2,43 @@
 
 declare(strict_types=1);
 
-namespace Segment\Consumer;
+namespace Hightouch\Consumer;
 
 class Socket extends QueueConsumer
 {
     protected string $type = 'Socket';
+
+    private string $host = 'us-east-1.hightouch-events.com';
+    private string $protocol = 'ssl'; // ssl or tls
+    private float $timeout = 5;
     private bool $socket_failed = false;
 
     /**
      * Creates a new socket consumer for dispatching async requests immediately.
      *
-     * @param string $secret
+     * @param string $writeKey
      * @param array $options
      *     number "timeout" - the timeout for connecting
-     *     function "error_handler" - function called back on errors.
-     *     bool "debug" - whether to use debug output, wait for response.
+     *     bool "tls" - if we should use TLS instead of SSL.
      */
-    public function __construct(string $secret, array $options = [])
+    public function __construct(string $writeKey, array $options = [])
     {
-        if (!isset($options['timeout'])) {
-            $options['timeout'] = 5;
+        parent::__construct($writeKey, $options);
+
+        if (isset($options['host'])) {
+            $this->host = $options['host'];
         }
 
-        if (!isset($options['host'])) {
-            $options['host'] = 'api.segment.io';
+        if (isset($options['tls']) && $options['tls']) {
+            $this->protocol = 'tls';
         }
 
-        if (!isset($options['tls'])) {
-            $options['tls'] = '';
+        if (isset($options['timeout'])) {
+            $this->timeout = $options['timeout'];
         }
-
-        parent::__construct($secret, $options);
     }
 
-    public function flushBatch($batch): bool
+    protected function flushBatch($batch): bool
     {
         $socket = $this->createSocket();
 
@@ -46,7 +49,7 @@ class Socket extends QueueConsumer
         $payload = $this->payload($batch);
         $payload = json_encode($payload);
 
-        $body = $this->createBody($this->options['host'], $payload);
+        $body = $this->createBody($this->host, $payload);
         if ($body === false) {
             return false;
         }
@@ -65,18 +68,15 @@ class Socket extends QueueConsumer
             return false;
         }
 
-        $protocol = $this->options['tls'] ? 'tls' : 'ssl';
-        $host = $this->options['host'];
         $port = 443;
-        $timeout = $this->options['timeout'];
 
         // Open our socket to the API Server.
         $socket = @pfsockopen(
-            $protocol . '://' . $host,
+            $this->protocol . '://' . $this->host,
             $port,
             $errno,
             $errstr,
-            $timeout
+            $this->timeout
         );
 
         // If we couldn't open the socket, handle the error.
@@ -100,7 +100,7 @@ class Socket extends QueueConsumer
         $req = "POST /v1/batch HTTP/1.1\r\n";
         $req .= 'Host: ' . $host . "\r\n";
         $req .= "Content-Type: application/json\r\n";
-        $req .= 'Authorization: Basic ' . base64_encode($this->secret . ':') . "\r\n";
+        $req .= 'Authorization: Basic ' . base64_encode($this->writeKey . ':') . "\r\n";
         $req .= "Accept: application/json\r\n";
 
         // Send user agent in the form of {library_name}/{library_version} as per RFC 7231.
@@ -125,7 +125,7 @@ class Socket extends QueueConsumer
         if (strlen($req) >= 500 * 1024) {
             $msg = 'Payload size is larger than 512KB';
             /** @noinspection ForgottenDebugOutputInspection */
-            error_log('[Analytics][' . $this->type . '] ' . $msg);
+            error_log('[Hightouch][' . $this->type . '] ' . $msg);
 
             return false;
         }
@@ -181,7 +181,7 @@ class Socket extends QueueConsumer
             // Error code 429 indicates rate limited.
             // Retry uploading in these cases.
             if (($statusCode >= 500 && $statusCode <= 600) || $statusCode === 429 || $statusCode === 0) {
-                if ($backoff >= $this->maximum_backoff_duration) {
+                if ($backoff >= $this->max_backoff_ms) {
                     break;
                 }
 

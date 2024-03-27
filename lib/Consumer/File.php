@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Segment\Consumer;
+namespace Hightouch\Consumer;
 
 class File extends Consumer
 {
@@ -15,28 +15,25 @@ class File extends Consumer
 
     /**
      * The file consumer writes track and identify calls to a file.
-     * @param string $secret
+     *
+     * @param string $writeKey
      * @param array $options
-     *     string "filename" - where to log the analytics calls
      */
-    public function __construct(string $secret, array $options = [])
+    public function __construct(string $writeKey, array $options = [])
     {
-        if (!isset($options['filename'])) {
-            $options['filename'] = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'analytics.log';
-        }
+        parent::__construct($writeKey, $options);
 
-        parent::__construct($secret, $options);
+        $filename = isset($options['filename'])
+            ? $options['filename']
+            : sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'htevents.log';
 
-        $this->file_handle = @fopen($options['filename'], 'ab');
+        $this->file_handle = @fopen($filename, 'ab');
         if ($this->file_handle === false) {
-            $this->handleError(13, 'Failed to open analytics.log file');
+            $this->handleError(13, "Failed to open file: $filename");
             return;
         }
-        if (isset($options['filepermissions'])) {
-            chmod($options['filename'], $options['filepermissions']);
-        } else {
-            chmod($options['filename'], 0644);
-        }
+
+        chmod($filename, isset($options['filepermissions']) ? $options['filepermissions'] : 0644);
     }
 
     public function __destruct()
@@ -130,5 +127,13 @@ class File extends Consumer
     public function alias(array $message): bool
     {
         return $this->write($message);
+    }
+
+    /**
+     * no-op
+     */
+    public function flush(): bool
+    {
+        return true;
     }
 }
