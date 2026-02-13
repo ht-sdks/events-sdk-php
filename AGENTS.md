@@ -15,14 +15,14 @@ This file documents the dependency update workflow for this PHP repository.
 ### 1. Pre-flight Checks
 
 ```bash
-# Check PHP version
+# Verify PHP 7.4+ is installed
 php --version
 
-# Ensure Composer is installed
+# Verify Composer 2.x is installed
 composer --version
 
-# Ensure you're at the repository root
-pwd  # Should contain composer.json
+# Verify you're at the repository root
+ls composer.json
 ```
 
 ### 2. Establish Test Baseline
@@ -62,19 +62,22 @@ This shows installed vs. latest versions for all dependencies. Use `composer out
 composer update
 ```
 
-#### Option B: Update a Specific Package
+#### Option B: Update Specific Packages
 
 ```bash
 # Update a single package
 composer update phpunit/phpunit
 
-# Update with dependencies
+# Update multiple packages at once
+composer update phpunit/phpunit squizlabs/php_codesniffer
+
+# Update a package along with its dependencies
 composer update phpunit/phpunit --with-dependencies
 ```
 
 #### Option C: Major Version Updates
 
-For major version bumps, edit `composer.json` directly, then reinstall:
+For major version bumps that require changing version constraints in `composer.json`, edit the file directly, then reinstall:
 
 ```bash
 # After editing version constraints in composer.json:
