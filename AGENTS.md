@@ -2,7 +2,7 @@
 
 This file documents the dependency update workflow for this PHP repository.
 
-- **PHP Versions**: 7.4, 8.0, 8.1, 8.2, 8.3
+- **PHP Versions**: 7.4, 8.0, 8.1, 8.2, 8.3, 8.4, 8.5
 - **Package Manager**: Composer
 - **Testing**: PHPUnit 9.x (`vendor/bin/phpunit`)
 - **Linting**: PHP_CodeSniffer (`vendor/bin/phpcs`) with PSR-12 + Slevomat Coding Standard
@@ -102,7 +102,7 @@ Compare test results to the baseline from step 2. Fix any failures before procee
 
 ### 7. Verify CI Would Pass
 
-The CI matrix tests against PHP 7.4, 8.0, 8.1, 8.2, and 8.3. Locally, verify at least against your installed version:
+The CI matrix tests against PHP 7.4, 8.0, 8.1, 8.2, 8.3, 8.4, and 8.5. Locally, verify at least against your installed version:
 
 ```bash
 # Full CI-equivalent sequence
@@ -110,7 +110,7 @@ composer install -q --no-ansi --no-interaction --no-scripts --no-progress --pref
 vendor/bin/phpunit
 ```
 
-If you have multiple PHP versions available (e.g., via `phpenv` or `update-alternatives`), test on the minimum supported version (7.4) and the latest (8.3) at minimum.
+If you have multiple PHP versions available (e.g., via `phpenv` or `update-alternatives`), test on the minimum supported version (7.4) and the latest (8.5) at minimum.
 
 ---
 
@@ -122,6 +122,6 @@ When upgrading dependencies, ensure they still support PHP 7.4 (the minimum). Ch
 
 ### CI Failures After Dependency Updates
 
-1. **PHP compatibility errors**: Ensure updated packages support all PHP versions in the matrix (7.4 through 8.3)
+1. **PHP compatibility errors**: Ensure updated packages support all PHP versions in the matrix (7.4 through 8.5)
 2. **Test failures**: Review changelogs of updated packages for breaking changes
 3. **Code style violations**: Run `vendor/bin/phpcbf` to auto-fix, then manually fix remaining issues
