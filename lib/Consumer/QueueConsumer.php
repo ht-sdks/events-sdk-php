@@ -18,6 +18,9 @@ abstract class QueueConsumer extends Consumer
     protected int $max_batch_size_bytes = 512_000; // 500kb
     protected int $max_item_size_bytes = 32_000; // 32kb
     protected int $max_backoff_ms = 10_000; // 10s
+    private bool $retainBatch = false;
+    private float $nextSourceProbe = 0;
+    private int $probeDelay = 1;
     protected bool $compress_request = false;
     protected int $flush_interval_ms = 10_000; // 10s
 
@@ -80,6 +83,9 @@ abstract class QueueConsumer extends Consumer
      */
     public function flush(): bool
     {
+        if ($this->queue && microtime(true) < $this->nextSourceProbe) {
+            return false;
+        }
         $count = count($this->queue);
         $success = true;
 
@@ -93,16 +99,45 @@ abstract class QueueConsumer extends Consumer
                 return false;
             }
 
-            $success = $this->flushBatch($batch);
+            $this->retainBatch = false;
+            try {
+                $success = $this->flushBatch($batch);
+            } finally {
+                if ($this->retainBatch) {
+                    $this->queue = array_merge($batch, $this->queue);
+                }
+            }
 
             $count = count($this->queue);
 
-            if ($count > 0) {
+            if ($success && $count > 0) {
                 usleep($this->flush_interval_ms * 1000);
             }
         }
 
         return $success;
+    }
+
+    /**
+     * Record the disposition before invoking the application's error handler.
+     * Return true when the transport can retry the current request immediately with backoff.
+     */
+    protected function recordHttpStatus(int $status): bool
+    {
+        if (in_array($status, [401, 403, 404], true)) {
+            $this->retainBatch = true;
+            $this->nextSourceProbe = microtime(true) + $this->probeDelay;
+            $this->probeDelay = min(60, $this->probeDelay * 2);
+            return false;
+        }
+
+        $this->retainBatch = $status === 0 || $status === 408 || $status === 429 ||
+            ($status >= 500 && $status < 600);
+        if ($status >= 200 && $status < 300) {
+            $this->probeDelay = 1;
+            $this->nextSourceProbe = 0;
+        }
+        return $this->retainBatch;
     }
 
     /**

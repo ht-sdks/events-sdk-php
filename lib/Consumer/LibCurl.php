@@ -86,6 +86,7 @@ class LibCurl extends QueueConsumer
 
             $err = curl_error($ch);
             if ($err) {
+                $this->recordHttpStatus(0);
                 $this->handleError(curl_errno($ch), $err);
                 return false;
             }
@@ -95,24 +96,19 @@ class LibCurl extends QueueConsumer
             //close connection
             curl_close($ch);
 
-            if ($responseCode !== 200) {
-                // log error
-                $this->handleError($responseCode, $responseContent);
-
-                if (($responseCode >= 500 && $responseCode <= 600) || $responseCode === 429) {
-                    // If status code is greater than 500 and less than 600, it indicates server error
-                    // Error code 429 indicates rate limited.
-                    // Retry uploading in these cases.
-                    usleep($backoff * 1000);
-                    $backoff *= 2;
-                } elseif ($responseCode >= 400) {
-                    break;
-                }
-            } else {
-                break; // no error
+            $retryable = $this->recordHttpStatus($responseCode);
+            if ($responseCode >= 200 && $responseCode < 300) {
+                return true;
             }
+
+            $this->handleError($responseCode, $responseContent);
+            if (!$retryable) {
+                return false;
+            }
+            usleep($backoff * 1000);
+            $backoff *= 2;
         }
 
-        return true;
+        return false;
     }
 }
