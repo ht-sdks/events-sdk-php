@@ -18,6 +18,7 @@ abstract class QueueConsumer extends Consumer
     protected int $max_batch_size_bytes = 512_000; // 500kb
     protected int $max_item_size_bytes = 32_000; // 32kb
     protected int $max_backoff_ms = 10_000; // 10s
+    private bool $uploading = false;
     private bool $retainBatch = false;
     private float $nextSourceProbe = 0;
     private int $probeDelay = 1;
@@ -83,7 +84,7 @@ abstract class QueueConsumer extends Consumer
      */
     public function flush(): bool
     {
-        if ($this->queue && microtime(true) < $this->nextSourceProbe) {
+        if ($this->uploading || ($this->queue && microtime(true) < $this->nextSourceProbe)) {
             return false;
         }
         $count = count($this->queue);
@@ -99,11 +100,15 @@ abstract class QueueConsumer extends Consumer
                 return false;
             }
 
+            $this->uploading = true;
             $this->retainBatch = false;
             try {
                 $success = $this->flushBatch($batch);
             } finally {
+                $this->uploading = false;
                 if ($this->retainBatch) {
+                    $this->nextSourceProbe = microtime(true) + $this->probeDelay;
+                    $this->probeDelay = min(60, $this->probeDelay * 2);
                     $this->queue = array_merge($batch, $this->queue);
                 }
             }
@@ -126,18 +131,16 @@ abstract class QueueConsumer extends Consumer
     {
         if (in_array($status, [401, 403, 404], true)) {
             $this->retainBatch = true;
-            $this->nextSourceProbe = microtime(true) + $this->probeDelay;
-            $this->probeDelay = min(60, $this->probeDelay * 2);
             return false;
         }
 
         $this->retainBatch = $status === 0 || $status === 408 || $status === 429 ||
             ($status >= 500 && $status < 600);
-        if ($status >= 200 && $status < 300) {
+        if (!$this->retainBatch) {
             $this->probeDelay = 1;
             $this->nextSourceProbe = 0;
         }
-        return $this->retainBatch;
+        return $this->retainBatch && $this->nextSourceProbe === 0.0;
     }
 
     /**

@@ -13,15 +13,17 @@ use Hightouch\Consumer\QueueConsumer;
 
 class ClientTest extends TestCase
 {
-    public function testSourceRejectionRetainsBatchAndDefersAnotherFlush(): void
+    /** @dataProvider recoverableStatuses */
+    public function testRecoverableFailureRetainsBatchAndDefersAnotherFlush(int $status): void
     {
         $consumer = new class ('original') extends QueueConsumer {
             public array $requests = [];
+            public int $status;
 
             protected function flushBatch(array $messages): bool
             {
                 $this->requests[] = $messages;
-                $this->recordHttpStatus(401);
+                $this->recordHttpStatus($this->status);
                 return false;
             }
 
@@ -30,12 +32,18 @@ class ClientTest extends TestCase
                 return $this->queue;
             }
         };
+        $consumer->status = $status;
         $event = ['messageId' => 'original-event'];
         self::assertTrue($consumer->track($event));
         self::assertFalse($consumer->flush());
         self::assertFalse($consumer->flush());
         self::assertSame([[$event]], $consumer->requests);
         self::assertSame([$event], $consumer->pending());
+    }
+
+    public static function recoverableStatuses(): array
+    {
+        return [[401], [408], [429], [503], [0]];
     }
 
     public function testClientUsesLibCurlConsumerAsDefault(): void
