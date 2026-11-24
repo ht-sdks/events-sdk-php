@@ -9,41 +9,24 @@ use Hightouch\Client;
 use Hightouch\HightouchException;
 use Hightouch\Consumer\ForkCurl;
 use Hightouch\Consumer\LibCurl;
-use Hightouch\Consumer\QueueConsumer;
 
 class ClientTest extends TestCase
 {
-    /** @dataProvider recoverableStatuses */
-    public function testRecoverableFailureRetainsBatchAndDefersAnotherFlush(int $status): void
+    /** @dataProvider httpStatuses */
+    public function testTransientHttpStatus(int $status, bool $expected): void
     {
-        $consumer = new class ('original') extends QueueConsumer {
-            public array $requests = [];
-            public int $status;
-
-            protected function flushBatch(array $messages): bool
+        $consumer = new class ('test') extends LibCurl {
+            public function retryable(int $status): bool
             {
-                $this->requests[] = $messages;
-                $this->recordHttpStatus($this->status);
-                return false;
-            }
-
-            public function pending(): array
-            {
-                return $this->queue;
+                return self::isTransientHttpStatus($status);
             }
         };
-        $consumer->status = $status;
-        $event = ['messageId' => 'original-event'];
-        self::assertTrue($consumer->track($event));
-        self::assertFalse($consumer->flush());
-        self::assertFalse($consumer->flush());
-        self::assertSame([[$event]], $consumer->requests);
-        self::assertSame([$event], $consumer->pending());
+        self::assertSame($expected, $consumer->retryable($status));
     }
 
-    public static function recoverableStatuses(): array
+    public static function httpStatuses(): array
     {
-        return [[408], [429], [503], [0]];
+        return [[400, false], [408, true], [429, true], [500, true], [599, true], [600, false]];
     }
 
     public function testClientUsesLibCurlConsumerAsDefault(): void

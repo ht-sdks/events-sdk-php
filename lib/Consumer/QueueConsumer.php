@@ -18,10 +18,6 @@ abstract class QueueConsumer extends Consumer
     protected int $max_batch_size_bytes = 512_000; // 500kb
     protected int $max_item_size_bytes = 32_000; // 32kb
     protected int $max_backoff_ms = 10_000; // 10s
-    private bool $uploading = false;
-    private bool $retainBatch = false;
-    private float $nextSourceProbe = 0;
-    private int $probeDelay = 1;
     protected bool $compress_request = false;
     protected int $flush_interval_ms = 10_000; // 10s
 
@@ -84,9 +80,6 @@ abstract class QueueConsumer extends Consumer
      */
     public function flush(): bool
     {
-        if ($this->uploading || ($this->queue && microtime(true) < $this->nextSourceProbe)) {
-            return false;
-        }
         $count = count($this->queue);
         $success = true;
 
@@ -100,22 +93,11 @@ abstract class QueueConsumer extends Consumer
                 return false;
             }
 
-            $this->uploading = true;
-            $this->retainBatch = false;
-            try {
-                $success = $this->flushBatch($batch);
-            } finally {
-                $this->uploading = false;
-                if ($this->retainBatch) {
-                    $this->nextSourceProbe = microtime(true) + $this->probeDelay;
-                    $this->probeDelay = min(60, $this->probeDelay * 2);
-                    $this->queue = array_merge($batch, $this->queue);
-                }
-            }
+            $success = $this->flushBatch($batch);
 
             $count = count($this->queue);
 
-            if ($success && $count > 0) {
+            if ($count > 0) {
                 usleep($this->flush_interval_ms * 1000);
             }
         }
@@ -123,19 +105,9 @@ abstract class QueueConsumer extends Consumer
         return $success;
     }
 
-    /**
-     * Record the disposition before invoking the application's error handler.
-     * Return true when the transport can retry the current request immediately with backoff.
-     */
-    protected function recordHttpStatus(int $status): bool
+    protected static function isTransientHttpStatus(int $status): bool
     {
-        $this->retainBatch = $status === 0 || $status === 408 || $status === 429 ||
-            ($status >= 500 && $status < 600);
-        if (!$this->retainBatch) {
-            $this->probeDelay = 1;
-            $this->nextSourceProbe = 0;
-        }
-        return $this->retainBatch && $this->nextSourceProbe === 0.0;
+        return $status === 408 || $status === 429 || ($status >= 500 && $status < 600);
     }
 
     /**
