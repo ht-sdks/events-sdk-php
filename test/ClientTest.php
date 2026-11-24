@@ -43,7 +43,7 @@ class ClientTest extends TestCase
 
     public static function recoverableStatuses(): array
     {
-        return [[401], [408], [429], [503], [0]];
+        return [[408], [429], [503], [0]];
     }
 
     public function testClientUsesLibCurlConsumerAsDefault(): void

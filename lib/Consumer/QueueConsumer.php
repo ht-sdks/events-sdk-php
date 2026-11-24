@@ -129,11 +129,6 @@ abstract class QueueConsumer extends Consumer
      */
     protected function recordHttpStatus(int $status): bool
     {
-        if (in_array($status, [401, 403, 404], true)) {
-            $this->retainBatch = true;
-            return false;
-        }
-
         $this->retainBatch = $status === 0 || $status === 408 || $status === 429 ||
             ($status >= 500 && $status < 600);
         if (!$this->retainBatch) {

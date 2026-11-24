@@ -171,6 +171,12 @@ class Socket extends QueueConsumer
             if ($statusCode >= 200 && $statusCode < 300) {
                 return true;
             }
+            if (in_array($statusCode, [401, 403, 404], true)) {
+                if ($this->debug()) {
+                    $this->handleError($statusCode, $res['message']);
+                }
+                return true;
+            }
             if (!$retryable || $backoff >= $this->max_backoff_ms) {
                 $this->handleError($statusCode, $res['message'] ?? 'No HTTP response');
                 return false;

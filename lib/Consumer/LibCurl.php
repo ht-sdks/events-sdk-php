@@ -102,6 +102,9 @@ class LibCurl extends QueueConsumer
             }
 
             $this->handleError($responseCode, $responseContent);
+            if (in_array($responseCode, [401, 403, 404], true)) {
+                return true;
+            }
             if (!$retryable) {
                 return false;
             }
