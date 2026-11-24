@@ -102,11 +102,8 @@ class LibCurl extends QueueConsumer
             }
 
             $this->handleError($responseCode, $responseContent);
-            if (in_array($responseCode, [401, 403, 404], true)) {
-                return true;
-            }
             if (!$retryable) {
-                return false;
+                return in_array($responseCode, [401, 403, 404], true);
             }
             usleep($backoff * 1000);
             $backoff *= 2;
