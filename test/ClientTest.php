@@ -9,9 +9,43 @@ use Hightouch\Client;
 use Hightouch\HightouchException;
 use Hightouch\Consumer\ForkCurl;
 use Hightouch\Consumer\LibCurl;
+use Hightouch\Consumer\QueueConsumer;
 
 class ClientTest extends TestCase
 {
+    /** @dataProvider recoverableStatuses */
+    public function testRecoverableFailureRetainsBatchAndDefersAnotherFlush(int $status): void
+    {
+        $consumer = new class ('original') extends QueueConsumer {
+            public array $requests = [];
+            public int $status;
+
+            protected function flushBatch(array $messages): bool
+            {
+                $this->requests[] = $messages;
+                $this->recordHttpStatus($this->status);
+                return false;
+            }
+
+            public function pending(): array
+            {
+                return $this->queue;
+            }
+        };
+        $consumer->status = $status;
+        $event = ['messageId' => 'original-event'];
+        self::assertTrue($consumer->track($event));
+        self::assertFalse($consumer->flush());
+        self::assertFalse($consumer->flush());
+        self::assertSame([[$event]], $consumer->requests);
+        self::assertSame([$event], $consumer->pending());
+    }
+
+    public static function recoverableStatuses(): array
+    {
+        return [[408], [429], [503], [0]];
+    }
+
     /** @dataProvider httpStatuses */
     public function testTransientHttpStatus(int $status, bool $expected): void
     {

@@ -86,6 +86,7 @@ class LibCurl extends QueueConsumer
 
             $err = curl_error($ch);
             if ($err) {
+                $this->recordHttpStatus(0);
                 $this->handleError(curl_errno($ch), $err);
                 return false;
             }
@@ -95,22 +96,19 @@ class LibCurl extends QueueConsumer
             //close connection
             curl_close($ch);
 
-            if ($responseCode !== 200) {
-                // log error
-                $this->handleError($responseCode, $responseContent);
-
-                if (self::isTransientHttpStatus($responseCode)) {
-                    // Retry timeouts, rate limits, and server errors.
-                    usleep($backoff * 1000);
-                    $backoff *= 2;
-                } elseif ($responseCode >= 400) {
-                    break;
-                }
-            } else {
-                break; // no error
+            $retryable = $this->recordHttpStatus($responseCode);
+            if ($responseCode >= 200 && $responseCode < 300) {
+                return true;
             }
+
+            $this->handleError($responseCode, $responseContent);
+            if (!$retryable) {
+                return in_array($responseCode, [401, 403, 404], true);
+            }
+            usleep($backoff * 1000);
+            $backoff *= 2;
         }
 
-        return true;
+        return false;
     }
 }

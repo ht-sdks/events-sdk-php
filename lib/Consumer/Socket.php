@@ -11,7 +11,6 @@ class Socket extends QueueConsumer
     private string $host = 'us-east-1.hightouch-events.com';
     private string $protocol = 'ssl'; // ssl or tls
     private float $timeout = 5;
-    private bool $socket_failed = false;
 
     /**
      * Creates a new socket consumer for dispatching async requests immediately.
@@ -64,10 +63,6 @@ class Socket extends QueueConsumer
      */
     private function createSocket()
     {
-        if ($this->socket_failed) {
-            return false;
-        }
-
         $port = 443;
 
         // Open our socket to the API Server.
@@ -81,8 +76,8 @@ class Socket extends QueueConsumer
 
         // If we couldn't open the socket, handle the error.
         if ($socket === false) {
+            $this->recordHttpStatus(0);
             $this->handleError($errno, $errstr);
-            $this->socket_failed = true;
         }
 
         return $socket;
@@ -144,7 +139,6 @@ class Socket extends QueueConsumer
     private function makeRequest($socket, string $req): bool
     {
         $bytes_total = strlen($req);
-        $success = true;
 
         // Retries with exponential backoff until success
         $backoff = 100; // Set initial waiting time to 100ms
@@ -156,6 +150,7 @@ class Socket extends QueueConsumer
             while (!$closed && $bytes_written < $bytes_total) {
                 $written = @fwrite($socket, substr($req, $bytes_written));
                 if (!$written) {
+                    $this->recordHttpStatus(0);
                     $this->handleError(13, 'Failed to write to socket.');
                     $closed = true;
                 } else {
@@ -172,35 +167,28 @@ class Socket extends QueueConsumer
             }
             fclose($socket);
 
-            // If status code is 200, return true
-            if ($statusCode === 200) {
+            $retryable = $this->recordHttpStatus($statusCode);
+            if ($statusCode >= 200 && $statusCode < 300) {
                 return true;
             }
-
-            // Retry timeouts, rate limits, and server errors.
-            if (self::isTransientHttpStatus($statusCode) || $statusCode === 0) {
-                if ($backoff >= $this->max_backoff_ms) {
-                    break;
-                }
-
-                usleep($backoff * 1000);
-            } elseif ($statusCode >= 400) {
+            if (in_array($statusCode, [401, 403, 404], true)) {
                 if ($this->debug()) {
                     $this->handleError($statusCode, $res['message']);
                 }
-
-                break;
+                return true;
+            }
+            if (!$retryable || $backoff >= $this->max_backoff_ms) {
+                $this->handleError($statusCode, $res['message'] ?? 'No HTTP response');
+                return false;
             }
 
-            // Retry uploading...
+            usleep($backoff * 1000);
             $backoff *= 2;
             $socket = $this->createSocket();
             if (!$socket) {
                 return false;
             }
         }
-
-        return $success;
     }
 
     /**
