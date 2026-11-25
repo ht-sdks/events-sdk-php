@@ -201,15 +201,11 @@ class Socket extends QueueConsumer
      */
     private static function parseResponse(string $res): array
     {
-        [$first,] = explode("\n", $res, 2);
+        $first = rtrim(explode("\n", $res, 2)[0], "\r");
+        if (!$first || !preg_match('/^HTTP\/\d+(?:\.\d+)? (\d{3})(?: (.*))?$/D', $first, $matches)) {
+            return [];
+        }
 
-        // Response comes back as HTTP/1.1 200 OK
-        // Final line contains HTTP response.
-        [, $status, $message] = explode(' ', $first, 3);
-
-        return [
-            'status'  => $status ?? null,
-            'message' => $message,
-        ];
+        return ['status' => $matches[1], 'message' => $matches[2] ?? ''];
     }
 }

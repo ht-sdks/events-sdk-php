@@ -86,11 +86,19 @@ class ClientTest extends TestCase
         return [[408], [429], [503], [0]];
     }
 
-    /** @runInSeparateProcess */
-    public function testSocketRetainsBatchAfterFailedRead(): void
+    public static function incompleteSocketReplies(): array
+    {
+        return [[false], [''], ["HTTP/1.1 20\r\n"]];
+    }
+
+    /**
+     * @runInSeparateProcess
+     * @dataProvider incompleteSocketReplies
+     */
+    public function testSocketRetainsBatchAfterFailedRead($reply): void
     {
         require __DIR__ . '/fixtures/socket-read.php';
-        $GLOBALS['socketReplies'] = [false, "HTTP/1.1 200 OK\r\n"];
+        $GLOBALS['socketReplies'] = [$reply, "HTTP/1.1 200\r\n"];
         $consumer = new class ('key', ['flush_at' => 1]) extends Socket {
             protected int $max_backoff_ms = 0;
             public float $clock = 10;
