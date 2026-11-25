@@ -94,7 +94,7 @@ class LibCurl extends QueueConsumer
             $responseCode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
 
             //close connection
-            curl_close($ch);
+            unset($ch);
 
             $retryable = $this->recordHttpStatus($responseCode);
             if ($responseCode >= 200 && $responseCode < 300) {
@@ -103,7 +103,7 @@ class LibCurl extends QueueConsumer
 
             $this->handleError($responseCode, $responseContent);
             if (!$retryable) {
-                return in_array($responseCode, [401, 403, 404], true);
+                return $responseCode >= 400 && !self::isTransientHttpStatus($responseCode);
             }
             usleep($backoff * 1000);
             $backoff *= 2;

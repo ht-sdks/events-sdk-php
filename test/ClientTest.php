@@ -103,6 +103,30 @@ class ClientTest extends TestCase
         self::assertSame([], $GLOBALS['socketReplies']);
     }
 
+    /** @runInSeparateProcess */
+    public function testLibCurlContinuesFlushAfterTerminalProbe(): void
+    {
+        require __DIR__ . '/fixtures/curl-status.php';
+        $GLOBALS['curlStatuses'] = [503, 400, 200, 200];
+        $errors = [];
+        $consumer = new class ('key', ['flush_at' => 1, 'error_handler' => function ($code) use (&$errors) {
+            $errors[] = $code;
+        }]) extends LibCurl {
+            protected int $max_backoff_ms = 101;
+            protected int $flush_interval_ms = 0;
+            public float $clock = 10;
+            protected function now(): float { return $this->clock; }
+        };
+        $event = ['context' => ['library' => ['name' => 'test', 'version' => '1']]];
+        foreach (['A', 'B', 'C'] as $id) {
+            $consumer->track(['messageId' => $id] + $event);
+        }
+        ++$consumer->clock;
+        self::assertTrue($consumer->flush());
+        self::assertSame([503, 400], $errors);
+        self::assertSame([], $GLOBALS['curlStatuses']);
+    }
+
     /** @dataProvider httpStatuses */
     public function testTransientHttpStatus(int $status, bool $expected): void
     {
