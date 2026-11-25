@@ -111,6 +111,33 @@ class ClientTest extends TestCase
         self::assertSame([], $GLOBALS['socketReplies']);
     }
 
+    /**
+     * @runInSeparateProcess
+     * @dataProvider terminalSocketStatuses
+     */
+    public function testSocketContinuesFlushAfterTerminalProbe(int $status): void
+    {
+        require __DIR__ . '/fixtures/socket-read.php';
+        $GLOBALS['socketReplies'] = ["HTTP/1.1 503 Busy\r\n", "HTTP/1.1 $status Rejected\r\n", "HTTP/1.1 200 OK\r\n"];
+        $consumer = new class ('key', ['flush_at' => 1]) extends Socket {
+            protected int $max_backoff_ms = 0;
+            protected int $flush_interval_ms = 0;
+            public float $clock = 10;
+            protected function now(): float { return $this->clock; }
+        };
+        $event = ['context' => ['library' => ['name' => 'test', 'version' => '1']]];
+        $consumer->track(['messageId' => 'A'] + $event);
+        $consumer->track(['messageId' => 'B'] + $event);
+        ++$consumer->clock;
+        self::assertTrue($consumer->flush());
+        self::assertSame([], $GLOBALS['socketReplies']);
+    }
+
+    public static function terminalSocketStatuses(): array
+    {
+        return [[400], [413]];
+    }
+
     /** @runInSeparateProcess */
     public function testLibCurlContinuesFlushAfterTerminalProbe(): void
     {

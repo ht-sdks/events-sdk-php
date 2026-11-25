@@ -172,7 +172,7 @@ class Socket extends QueueConsumer
             if ($statusCode >= 200 && $statusCode < 300) {
                 return true;
             }
-            if (in_array($statusCode, [401, 403, 404], true)) {
+            if ($statusCode >= 400 && !self::isTransientHttpStatus($statusCode)) {
                 if ($this->debug()) {
                     $this->handleError($statusCode, $res['message']);
                 }
