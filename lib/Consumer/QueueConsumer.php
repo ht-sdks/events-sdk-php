@@ -21,6 +21,8 @@ abstract class QueueConsumer extends Consumer
     /** @var array<int,array<int,mixed>> */
     private array $deferred = [];
     private int $deferredCount = 0;
+    /** Fresh messages completed or retained by flushBatch. */
+    private int $processedFresh = 0;
     private bool $probing = false;
     private bool $preferFresh = false;
     private bool $uploading = false;
@@ -119,6 +121,9 @@ abstract class QueueConsumer extends Consumer
                 $success = $this->flushBatch($batch);
             } finally {
                 $this->uploading = false;
+                if (!$this->preferFresh && ($success || $this->retainBatch)) {
+                    $this->processedFresh += count($batch);
+                }
                 if ($this->retainBatch) {
                     $this->nextSourceProbe = $this->now() + $this->probeDelay;
                     $this->probeDelay = min(60, $this->probeDelay * 2);
@@ -206,11 +211,11 @@ abstract class QueueConsumer extends Consumer
             return false;
         }
 
-        $count = array_push($this->queue, $item) + $this->deferredCount;
+        $position = array_push($this->queue, $item);
 
-        if ($count >= $this->flush_at) {
-            return $this->flush() || in_array($item, $this->queue, true)
-                || ($this->deferred && in_array($item, end($this->deferred), true));
+        if ($position + $this->deferredCount >= $this->flush_at) {
+            $throughItem = $this->processedFresh + $position;
+            return $this->flush() || $this->processedFresh >= $throughItem || in_array($item, $this->queue, true);
         }
 
         return true;

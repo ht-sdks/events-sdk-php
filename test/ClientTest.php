@@ -61,6 +61,18 @@ class ClientTest extends TestCase
         self::assertSame(['A', 'A', 'B', 'A', 'A'], $consumer->requests);
     }
 
+    public function testTrackSucceedsWhenALaterDeferredBatchFails(): void
+    {
+        $consumer = $this->queueConsumer();
+        self::assertTrue($consumer->track(['messageId' => 'A']));
+        ++$consumer->clock;
+        self::assertFalse($consumer->flush());
+        $consumer->clock += 2;
+        self::assertTrue($consumer->track(['messageId' => 'B']));
+        self::assertSame(['A', 'A', 'B', 'A'], $consumer->requests);
+        self::assertFalse($consumer->flush());
+    }
+
     /** @dataProvider capacityLimits */
     public function testFullQueueResumesAutomaticDelivery(bool $byteLimit): void
     {
