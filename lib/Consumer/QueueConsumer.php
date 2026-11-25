@@ -209,7 +209,8 @@ abstract class QueueConsumer extends Consumer
         $count = array_push($this->queue, $item) + $this->deferredCount;
 
         if ($count >= $this->flush_at) {
-            return $this->flush();
+            return $this->flush() || in_array($item, $this->queue, true)
+                || ($this->deferred && in_array($item, end($this->deferred), true));
         }
 
         return true;

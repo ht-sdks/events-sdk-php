@@ -66,8 +66,9 @@ class ClientTest extends TestCase
     {
         $consumer = $this->queueConsumer($byteLimit ? 100 : 2);
         $item = $byteLimit ? ['data' => str_repeat('x', 180)] : [];
-        $consumer->track(['messageId' => 'A'] + $item);
-        $consumer->track(['messageId' => 'B'] + $item);
+        self::assertTrue($consumer->track(['messageId' => 'A'] + $item));
+        self::assertTrue($consumer->track(['messageId' => 'B'] + $item));
+        self::assertFalse($consumer->flush());
         self::assertFalse($consumer->track(['messageId' => 'early'] + $item));
         self::assertSame(['A'], $consumer->requests);
         ++$consumer->clock;
@@ -105,7 +106,7 @@ class ClientTest extends TestCase
             protected function now(): float { return $this->clock; }
         };
         $event = ['context' => ['library' => ['name' => 'test', 'version' => '1']]];
-        self::assertFalse($consumer->track($event));
+        self::assertTrue($consumer->track($event));
         ++$consumer->clock;
         self::assertTrue($consumer->flush());
         self::assertSame([], $GLOBALS['socketReplies']);
