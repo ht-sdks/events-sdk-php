@@ -4,41 +4,54 @@ declare(strict_types=1);
 
 namespace Hightouch\Test;
 
-use PHPUnit\Framework\TestCase;
 use Hightouch\Client;
-use Hightouch\HightouchException;
 use Hightouch\Consumer\ForkCurl;
 use Hightouch\Consumer\LibCurl;
 use Hightouch\Consumer\QueueConsumer;
+use Hightouch\HightouchException;
+use PHPUnit\Framework\TestCase;
 
 class ClientTest extends TestCase
 {
     /** @dataProvider recoverableStatuses */
-    public function testRecoverableFailureRetainsBatchAndDefersAnotherFlush(int $status): void
+    public function testHealthyBatchPassesFailedProbeAfterSourceCooldown(int $status): void
     {
-        $consumer = new class ('original') extends QueueConsumer {
+        $consumer = new class ('original', ['flush_at' => 1]) extends QueueConsumer {
+            protected int $flush_interval_ms = 0;
+            /** @var string[] */
             public array $requests = [];
             public int $status;
+            public float $clock = 10;
+
+            protected function now(): float
+            {
+                return $this->clock;
+            }
 
             protected function flushBatch(array $messages): bool
             {
-                $this->requests[] = $messages;
-                $this->recordHttpStatus($this->status);
-                return false;
-            }
-
-            public function pending(): array
-            {
-                return $this->queue;
+                $id = $messages[0]['messageId'];
+                $this->requests[] = $id;
+                $status = $id === 'A' ? $this->status : 200;
+                $this->recordHttpStatus($status);
+                return $status === 200;
             }
         };
         $consumer->status = $status;
-        $event = ['messageId' => 'original-event'];
-        self::assertTrue($consumer->track($event));
-        self::assertFalse($consumer->flush());
-        self::assertFalse($consumer->flush());
-        self::assertSame([[$event]], $consumer->requests);
-        self::assertSame([$event], $consumer->pending());
+        $consumer->track(['messageId' => 'A']);
+        ++$consumer->clock;
+        $consumer->flush(); // A fails its deferred attempt too.
+        $consumer->track(['messageId' => 'B']);
+        $consumer->clock += 1.9;
+        $consumer->flush();
+        self::assertSame(['A', 'A'], $consumer->requests);
+        $consumer->clock += 0.2;
+        $consumer->flush();
+        self::assertSame(['A', 'A', 'B', 'A'], $consumer->requests);
+        $consumer->status = 200;
+        $consumer->clock += 60;
+        self::assertTrue($consumer->flush());
+        self::assertSame(['A', 'A', 'B', 'A', 'A'], $consumer->requests);
     }
 
     public static function recoverableStatuses(): array

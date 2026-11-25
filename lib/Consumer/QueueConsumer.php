@@ -18,6 +18,11 @@ abstract class QueueConsumer extends Consumer
     protected int $max_batch_size_bytes = 512_000; // 500kb
     protected int $max_item_size_bytes = 32_000; // 32kb
     protected int $max_backoff_ms = 10_000; // 10s
+    /** @var array<int,array<int,mixed>> */
+    private array $deferred = [];
+    private int $deferredCount = 0;
+    private bool $probing = false;
+    private bool $preferFresh = false;
     private bool $uploading = false;
     private bool $retainBatch = false;
     private float $nextSourceProbe = 0;
@@ -84,14 +89,22 @@ abstract class QueueConsumer extends Consumer
      */
     public function flush(): bool
     {
-        if ($this->uploading || ($this->queue && microtime(true) < $this->nextSourceProbe)) {
+        if ($this->uploading || $this->now() < $this->nextSourceProbe) {
             return false;
         }
-        $count = count($this->queue);
+        $count = count($this->queue) + $this->deferredCount;
         $success = true;
 
         while ($count > 0 && $success) {
-            $batch = array_splice($this->queue, 0, min($this->flush_at, $count));
+            $this->probing = !empty($this->deferred);
+            if ($this->probing && (!$this->preferFresh || !$this->queue)) {
+                $batch = array_shift($this->deferred);
+                $this->deferredCount -= count($batch);
+                $this->preferFresh = true;
+            } else {
+                $batch = array_splice($this->queue, 0, $this->flush_at);
+                $this->preferFresh = false;
+            }
 
             if (mb_strlen(serialize($batch), '8bit') >= $this->max_batch_size_bytes) {
                 $msg = 'Batch size is larger than 500KB';
@@ -107,13 +120,14 @@ abstract class QueueConsumer extends Consumer
             } finally {
                 $this->uploading = false;
                 if ($this->retainBatch) {
-                    $this->nextSourceProbe = microtime(true) + $this->probeDelay;
+                    $this->nextSourceProbe = $this->now() + $this->probeDelay;
                     $this->probeDelay = min(60, $this->probeDelay * 2);
-                    $this->queue = array_merge($batch, $this->queue);
+                    $this->deferred[] = $batch;
+                    $this->deferredCount += count($batch);
                 }
             }
 
-            $count = count($this->queue);
+            $count = count($this->queue) + $this->deferredCount;
 
             if ($success && $count > 0) {
                 usleep($this->flush_interval_ms * 1000);
@@ -134,7 +148,12 @@ abstract class QueueConsumer extends Consumer
             $this->probeDelay = 1;
             $this->nextSourceProbe = 0;
         }
-        return $this->retainBatch && $this->nextSourceProbe === 0.0;
+        return $this->retainBatch && !$this->probing;
+    }
+
+    protected function now(): float
+    {
+        return microtime(true);
     }
 
     protected static function isTransientHttpStatus(int $status): bool
@@ -168,13 +187,13 @@ abstract class QueueConsumer extends Consumer
      */
     protected function enqueue($item): bool
     {
-        $count = count($this->queue);
+        $count = count($this->queue) + $this->deferredCount;
 
-        if ($count > $this->max_queue_size) {
+        if ($count >= $this->max_queue_size) {
             return false;
         }
 
-        if (mb_strlen(serialize($this->queue), '8bit') >= $this->max_queue_size_bytes) {
+        if (mb_strlen(serialize([$this->queue, $this->deferred]), '8bit') >= $this->max_queue_size_bytes) {
             $msg = 'Queue size is larger than 32MB';
             error_log('[Hightouch][' . $this->type . '] ' . $msg);
 
@@ -188,7 +207,7 @@ abstract class QueueConsumer extends Consumer
             return false;
         }
 
-        $count = array_push($this->queue, $item);
+        $count = array_push($this->queue, $item) + $this->deferredCount;
 
         if ($count >= $this->flush_at) {
             return $this->flush();
