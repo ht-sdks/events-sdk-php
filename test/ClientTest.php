@@ -17,15 +17,11 @@ class ClientTest extends TestCase
     {
         return new class ('original', ['flush_at' => 1, 'max_queue_size' => $maxCount]) extends QueueConsumer {
             protected int $flush_interval_ms = 0;
+            protected int $max_queue_size_bytes = 350;
             /** @var string[] */
             public array $requests = [];
             public int $status = 503;
             public float $clock = 10;
-
-            public function limitBytes(int $bytes): void
-            {
-                $this->max_queue_size_bytes = $bytes;
-            }
 
             protected function now(): float
             {
@@ -68,10 +64,7 @@ class ClientTest extends TestCase
     public function testFullQueueResumesAutomaticDelivery(bool $byteLimit): void
     {
         $consumer = $this->queueConsumer($byteLimit ? 100 : 2);
-        if ($byteLimit) {
-            $consumer->limitBytes(350);
-        }
-        $item = ['data' => str_repeat('x', 180)];
+        $item = $byteLimit ? ['data' => str_repeat('x', 180)] : [];
         $consumer->track(['messageId' => 'A'] + $item);
         $consumer->track(['messageId' => 'B'] + $item);
         self::assertFalse($consumer->track(['messageId' => 'early'] + $item));
