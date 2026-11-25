@@ -187,16 +187,10 @@ abstract class QueueConsumer extends Consumer
      */
     protected function enqueue($item): bool
     {
-        $count = count($this->queue) + $this->deferredCount;
-
-        if ($count >= $this->max_queue_size) {
-            return false;
+        if ($this->deferredCount > 0 && $this->queueIsFull()) {
+            $this->flush();
         }
-
-        if (mb_strlen(serialize([$this->queue, $this->deferred]), '8bit') >= $this->max_queue_size_bytes) {
-            $msg = 'Queue size is larger than 32MB';
-            error_log('[Hightouch][' . $this->type . '] ' . $msg);
-
+        if ($this->queueIsFull(true)) {
             return false;
         }
 
@@ -213,6 +207,20 @@ abstract class QueueConsumer extends Consumer
             return $this->flush();
         }
 
+        return true;
+    }
+
+    private function queueIsFull(bool $report = false): bool
+    {
+        if (count($this->queue) + $this->deferredCount >= $this->max_queue_size) {
+            return true;
+        }
+        if (mb_strlen(serialize([$this->queue, $this->deferred]), '8bit') < $this->max_queue_size_bytes) {
+            return false;
+        }
+        if ($report) {
+            error_log('[Hightouch][' . $this->type . '] Queue size is larger than 32MB');
+        }
         return true;
     }
 

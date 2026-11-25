@@ -13,15 +13,19 @@ use PHPUnit\Framework\TestCase;
 
 class ClientTest extends TestCase
 {
-    /** @dataProvider recoverableStatuses */
-    public function testHealthyBatchPassesFailedProbeAfterSourceCooldown(int $status): void
+    private function queueConsumer(int $maxCount = 100): QueueConsumer
     {
-        $consumer = new class ('original', ['flush_at' => 1]) extends QueueConsumer {
+        return new class ('original', ['flush_at' => 1, 'max_queue_size' => $maxCount]) extends QueueConsumer {
             protected int $flush_interval_ms = 0;
             /** @var string[] */
             public array $requests = [];
-            public int $status;
+            public int $status = 503;
             public float $clock = 10;
+
+            public function limitBytes(int $bytes): void
+            {
+                $this->max_queue_size_bytes = $bytes;
+            }
 
             protected function now(): float
             {
@@ -37,6 +41,12 @@ class ClientTest extends TestCase
                 return $status === 200;
             }
         };
+    }
+
+    /** @dataProvider recoverableStatuses */
+    public function testHealthyBatchPassesFailedProbeAfterSourceCooldown(int $status): void
+    {
+        $consumer = $this->queueConsumer();
         $consumer->status = $status;
         $consumer->track(['messageId' => 'A']);
         ++$consumer->clock;
@@ -52,6 +62,29 @@ class ClientTest extends TestCase
         $consumer->clock += 60;
         self::assertTrue($consumer->flush());
         self::assertSame(['A', 'A', 'B', 'A', 'A'], $consumer->requests);
+    }
+
+    /** @dataProvider capacityLimits */
+    public function testFullQueueResumesAutomaticDelivery(bool $byteLimit): void
+    {
+        $consumer = $this->queueConsumer($byteLimit ? 100 : 2);
+        if ($byteLimit) {
+            $consumer->limitBytes(350);
+        }
+        $item = ['data' => str_repeat('x', 180)];
+        $consumer->track(['messageId' => 'A'] + $item);
+        $consumer->track(['messageId' => 'B'] + $item);
+        self::assertFalse($consumer->track(['messageId' => 'early'] + $item));
+        self::assertSame(['A'], $consumer->requests);
+        ++$consumer->clock;
+        $consumer->status = 200;
+        self::assertTrue($consumer->track(['messageId' => 'C'] + $item));
+        self::assertSame(['A', 'A', 'B', 'C'], $consumer->requests);
+    }
+
+    public static function capacityLimits(): array
+    {
+        return [[false], [true]];
     }
 
     public static function recoverableStatuses(): array
