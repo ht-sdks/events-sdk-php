@@ -143,19 +143,19 @@ class Socket extends QueueConsumer
      */
     private function makeRequest($socket, string $req): bool
     {
-        $bytes_written = 0;
         $bytes_total = strlen($req);
-        $closed = false;
         $success = true;
 
         // Retries with exponential backoff until success
         $backoff = 100; // Set initial waiting time to 100ms
 
         while (true) {
+            $bytes_written = 0;
+            $closed = false;
             // Send request to server
             while (!$closed && $bytes_written < $bytes_total) {
                 $written = @fwrite($socket, substr($req, $bytes_written));
-                if ($written === false) {
+                if (!$written) {
                     $this->handleError(13, 'Failed to write to socket.');
                     $closed = true;
                 } else {
@@ -177,10 +177,8 @@ class Socket extends QueueConsumer
                 return true;
             }
 
-            // If status code is greater than 500 and less than 600, it indicates server error
-            // Error code 429 indicates rate limited.
-            // Retry uploading in these cases.
-            if (($statusCode >= 500 && $statusCode <= 600) || $statusCode === 429 || $statusCode === 0) {
+            // Retry timeouts, rate limits, and server errors.
+            if (self::isTransientHttpStatus($statusCode) || $statusCode === 0) {
                 if ($backoff >= $this->max_backoff_ms) {
                     break;
                 }
@@ -188,7 +186,7 @@ class Socket extends QueueConsumer
                 usleep($backoff * 1000);
             } elseif ($statusCode >= 400) {
                 if ($this->debug()) {
-                    $this->handleError($res['status'], $res['message']);
+                    $this->handleError($statusCode, $res['message']);
                 }
 
                 break;
@@ -197,6 +195,9 @@ class Socket extends QueueConsumer
             // Retry uploading...
             $backoff *= 2;
             $socket = $this->createSocket();
+            if (!$socket) {
+                return false;
+            }
         }
 
         return $success;

@@ -99,10 +99,8 @@ class LibCurl extends QueueConsumer
                 // log error
                 $this->handleError($responseCode, $responseContent);
 
-                if (($responseCode >= 500 && $responseCode <= 600) || $responseCode === 429) {
-                    // If status code is greater than 500 and less than 600, it indicates server error
-                    // Error code 429 indicates rate limited.
-                    // Retry uploading in these cases.
+                if (self::isTransientHttpStatus($responseCode)) {
+                    // Retry timeouts, rate limits, and server errors.
                     usleep($backoff * 1000);
                     $backoff *= 2;
                 } elseif ($responseCode >= 400) {

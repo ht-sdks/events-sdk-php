@@ -105,6 +105,11 @@ abstract class QueueConsumer extends Consumer
         return $success;
     }
 
+    protected static function isTransientHttpStatus(int $status): bool
+    {
+        return $status === 408 || $status === 429 || ($status >= 500 && $status < 600);
+    }
+
     /**
      * Implementation for batch sending messages to the server
      *
