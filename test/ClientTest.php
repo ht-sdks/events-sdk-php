@@ -162,6 +162,17 @@ class ClientTest extends TestCase
         self::assertSame([], $GLOBALS['curlStatuses']);
     }
 
+    public function testMalformedCollectorUrlIsNotRetained(): void
+    {
+        $errors = [];
+        $consumer = new LibCurl('key', ['host' => 'http://[', 'flush_at' => 1,
+            'error_handler' => function ($code) use (&$errors) { $errors[] = $code; },
+        ]);
+        self::assertFalse($consumer->track(['context' => ['library' => ['name' => 'test', 'version' => '1']]]));
+        self::assertTrue($consumer->flush());
+        self::assertSame([CURLE_URL_MALFORMAT], $errors);
+    }
+
     /** @dataProvider httpStatuses */
     public function testTransientHttpStatus(int $status, bool $expected): void
     {

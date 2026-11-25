@@ -86,8 +86,9 @@ class LibCurl extends QueueConsumer
 
             $err = curl_error($ch);
             if ($err) {
-                $this->recordHttpStatus(0);
-                $this->handleError(curl_errno($ch), $err);
+                $code = curl_errno($ch);
+                $this->recordRetryable($code !== CURLE_URL_MALFORMAT && $code !== CURLE_UNSUPPORTED_PROTOCOL);
+                $this->handleError($code, $err);
                 return false;
             }
 

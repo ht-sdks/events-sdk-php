@@ -143,7 +143,12 @@ abstract class QueueConsumer extends Consumer
      */
     protected function recordHttpStatus(int $status): bool
     {
-        $this->retainBatch = $status === 0 || self::isTransientHttpStatus($status);
+        return $this->recordRetryable($status === 0 || self::isTransientHttpStatus($status));
+    }
+
+    protected function recordRetryable(bool $retryable): bool
+    {
+        $this->retainBatch = $retryable;
         if (!$this->retainBatch) {
             $this->probeDelay = 1;
             $this->nextSourceProbe = 0;
