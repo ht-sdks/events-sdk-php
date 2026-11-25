@@ -8,6 +8,7 @@ use Hightouch\Client;
 use Hightouch\Consumer\ForkCurl;
 use Hightouch\Consumer\LibCurl;
 use Hightouch\Consumer\QueueConsumer;
+use Hightouch\Consumer\Socket;
 use Hightouch\HightouchException;
 use PHPUnit\Framework\TestCase;
 
@@ -83,6 +84,23 @@ class ClientTest extends TestCase
     public static function recoverableStatuses(): array
     {
         return [[408], [429], [503], [0]];
+    }
+
+    /** @runInSeparateProcess */
+    public function testSocketRetainsBatchAfterFailedRead(): void
+    {
+        require __DIR__ . '/fixtures/socket-read.php';
+        $GLOBALS['socketReplies'] = [false, "HTTP/1.1 200 OK\r\n"];
+        $consumer = new class ('key', ['flush_at' => 1]) extends Socket {
+            protected int $max_backoff_ms = 0;
+            public float $clock = 10;
+            protected function now(): float { return $this->clock; }
+        };
+        $event = ['context' => ['library' => ['name' => 'test', 'version' => '1']]];
+        self::assertFalse($consumer->track($event));
+        ++$consumer->clock;
+        self::assertTrue($consumer->flush());
+        self::assertSame([], $GLOBALS['socketReplies']);
     }
 
     /** @dataProvider httpStatuses */

@@ -162,8 +162,9 @@ class Socket extends QueueConsumer
             $statusCode = 0;
 
             if (!$closed) {
-                $res = self::parseResponse(fread($socket, 2048));
-                $statusCode = (int)$res['status'];
+                $reply = fread($socket, 2048);
+                $res = $reply === false ? [] : self::parseResponse($reply);
+                $statusCode = (int)($res['status'] ?? 0);
             }
             fclose($socket);
 
