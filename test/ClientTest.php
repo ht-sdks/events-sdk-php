@@ -12,6 +12,32 @@ use Hightouch\Consumer\LibCurl;
 
 class ClientTest extends TestCase
 {
+    /**
+     * @runInSeparateProcess
+     * @dataProvider collectorResponses
+     */
+    public function testFlushReportsCollectorResult(string $consumer, array $statuses, bool $success): void
+    {
+        require __DIR__ . '/fixtures/collector-response.php';
+        $GLOBALS['collectorStatuses'] = $statuses;
+        $client = new Client('key', ['consumer' => $consumer]);
+        self::assertTrue($client->track(['event' => 'test', 'userId' => 'user']));
+        self::assertSame($success, $client->flush());
+        self::assertSame([], $GLOBALS['collectorStatuses']);
+    }
+
+    public static function collectorResponses(): array
+    {
+        return [
+            'exhausted libcurl' => ['lib_curl', array_fill(0, 7, 503), false],
+            'exhausted socket' => ['socket', array_fill(0, 8, 503), false],
+            'rejected libcurl' => ['lib_curl', [400], false],
+            'rejected socket' => ['socket', [400], false],
+            'successful libcurl retry' => ['lib_curl', [503, 200], true],
+            'successful socket retry' => ['socket', [503, 200], true],
+        ];
+    }
+
     /** @dataProvider httpStatuses */
     public function testTransientHttpStatus(int $status, bool $expected): void
     {
