@@ -144,7 +144,6 @@ class Socket extends QueueConsumer
     private function makeRequest($socket, string $req): bool
     {
         $bytes_total = strlen($req);
-        $success = true;
 
         // Retries with exponential backoff until success
         $backoff = 100; // Set initial waiting time to 100ms
@@ -200,7 +199,7 @@ class Socket extends QueueConsumer
             }
         }
 
-        return $success;
+        return false;
     }
 
     /**

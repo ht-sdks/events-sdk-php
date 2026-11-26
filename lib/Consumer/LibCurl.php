@@ -104,13 +104,13 @@ class LibCurl extends QueueConsumer
                     usleep($backoff * 1000);
                     $backoff *= 2;
                 } elseif ($responseCode >= 400) {
-                    break;
+                    return false;
                 }
             } else {
-                break; // no error
+                return true;
             }
         }
 
-        return true;
+        return false;
     }
 }
